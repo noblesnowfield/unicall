@@ -33,8 +33,11 @@ export default {
 
     miaotixing: {
       default: {
-        // 简易模式只需要喵码；app/type/option 等高级字段可在本地配置里按需增加。
-        id: process.env.UNICALL_MIAOTIXING_DEFAULT_ID
+        // 简易模式只需要喵码；app/type/option 可按需通过 env 开启高级能力。
+        id: process.env.UNICALL_MIAOTIXING_DEFAULT_ID,
+        app: process.env.UNICALL_MIAOTIXING_DEFAULT_APP,
+        type: process.env.UNICALL_MIAOTIXING_DEFAULT_TYPE,
+        option: process.env.UNICALL_MIAOTIXING_DEFAULT_OPTION
       }
     },
 
