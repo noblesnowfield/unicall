@@ -48,11 +48,62 @@ export interface WxPusherQrCodeUidResult {
   readonly raw: unknown;
 }
 
+export interface WxPusherCallbackEvent {
+  /** 回调动作，例如 app_subscribe、send_up_cmd、order_pay。 */
+  readonly action: string;
+  /** 回调用户 UID。关注应用、上行消息、付费状态等回调通常都会携带。 */
+  readonly uid?: string;
+  /** WxPusher 应用 ID。 */
+  readonly appId?: number;
+  /** WxPusher 应用名称。 */
+  readonly appName?: string;
+  /** 用户关注来源，例如 scan、link、command。 */
+  readonly source?: string;
+  /** 参数二维码携带的业务参数，默认应用二维码通常为空。 */
+  readonly extra?: string;
+  /** WxPusher 回调时间戳。 */
+  readonly time?: number;
+  /** WxPusher 原始回调体。 */
+  readonly raw: unknown;
+}
+
 interface WxPusherApiResponse {
   readonly code?: number;
   readonly msg?: string;
   readonly success?: boolean;
   readonly data?: unknown;
+}
+
+/**
+ * 解析 WxPusher 回调体，便于在服务端保存 UID 或回显扫码结果。
+ */
+export function parseWxPusherCallback(payload: unknown): WxPusherCallbackEvent {
+  if (!payload || typeof payload !== 'object') {
+    throw new TypeError('WxPusher callback payload must be an object');
+  }
+
+  const root = payload as Readonly<Record<string, unknown>>;
+  const action = readRequiredString(root, 'action');
+  const data = root.data && typeof root.data === 'object'
+    ? (root.data as Readonly<Record<string, unknown>>)
+    : {};
+  const uid = readRecordString(data, 'uid');
+  const appId = readRecordNumber(data, 'appId');
+  const appName = readRecordString(data, 'appName');
+  const source = readRecordString(data, 'source');
+  const extra = readRecordString(data, 'extra');
+  const time = readRecordNumber(data, 'time') ?? readRecordNumber(data, 'createTime');
+
+  return {
+    action,
+    ...(uid ? { uid } : {}),
+    ...(appId !== undefined ? { appId } : {}),
+    ...(appName ? { appName } : {}),
+    ...(source ? { source } : {}),
+    ...(extra ? { extra } : {}),
+    ...(time !== undefined ? { time } : {}),
+    raw: payload
+  };
 }
 
 /**
@@ -168,4 +219,35 @@ function readString(data: unknown, keys: readonly string[]): string | undefined 
   }
 
   return undefined;
+}
+
+function readRequiredString(
+  record: Readonly<Record<string, unknown>>,
+  key: string
+): string {
+  const value = readRecordString(record, key);
+
+  if (!value) {
+    throw new TypeError(`WxPusher callback missing ${key}`);
+  }
+
+  return value;
+}
+
+function readRecordString(
+  record: Readonly<Record<string, unknown>>,
+  key: string
+): string | undefined {
+  const value = record[key];
+
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function readRecordNumber(
+  record: Readonly<Record<string, unknown>>,
+  key: string
+): number | undefined {
+  const value = record[key];
+
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }

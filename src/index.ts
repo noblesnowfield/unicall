@@ -16,6 +16,7 @@ export {
   mailtoProviderFactory,
   MiaotixingProvider,
   miaotixingProviderFactory,
+  parseWxPusherCallback,
   PushplusProvider,
   pushplusProviderFactory,
   resolveSmtpEndpoint,
@@ -34,6 +35,7 @@ export type { GameNotificationEmailOptions } from './providers';
 export type {
   CreateWxPusherQrCodeOptions,
   QueryWxPusherQrCodeUidOptions,
+  WxPusherCallbackEvent,
   WxPusherQrCodeResult,
   WxPusherQrCodeUidResult
 } from './providers';

@@ -3,6 +3,7 @@ import {
   createWxPusherQrCode,
   InvalidProviderConfigError,
   NotificationRuntime,
+  parseWxPusherCallback,
   ProviderRegistry,
   queryWxPusherQrCodeUid,
   wxPusherProviderFactory
@@ -142,5 +143,40 @@ describe('WxPusherProvider', () => {
         method: 'GET'
       })
     );
+  });
+
+  it('解析应用扫码关注回调中的 UID', () => {
+    const event = parseWxPusherCallback({
+      action: 'app_subscribe',
+      data: {
+        appId: 123,
+        appName: '通知应用',
+        source: 'scan',
+        time: 1569416451573,
+        uid: 'UID_SCAN',
+        extra: 'unicall-extra'
+      }
+    });
+
+    expect(event).toEqual({
+      action: 'app_subscribe',
+      appId: 123,
+      appName: '通知应用',
+      source: 'scan',
+      time: 1569416451573,
+      uid: 'UID_SCAN',
+      extra: 'unicall-extra',
+      raw: {
+        action: 'app_subscribe',
+        data: {
+          appId: 123,
+          appName: '通知应用',
+          source: 'scan',
+          time: 1569416451573,
+          uid: 'UID_SCAN',
+          extra: 'unicall-extra'
+        }
+      }
+    });
   });
 });

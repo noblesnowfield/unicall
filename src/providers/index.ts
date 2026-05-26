@@ -20,6 +20,7 @@ export { PushplusProvider, pushplusProviderFactory } from './pushplus';
 export { WebhookProvider, webhookProviderFactory } from './webhook';
 export {
   createWxPusherQrCode,
+  parseWxPusherCallback,
   queryWxPusherQrCodeUid,
   WxPusherProvider,
   wxPusherProviderFactory
@@ -27,6 +28,7 @@ export {
 export type {
   CreateWxPusherQrCodeOptions,
   QueryWxPusherQrCodeUidOptions,
+  WxPusherCallbackEvent,
   WxPusherQrCodeResult,
   WxPusherQrCodeUidResult
 } from './wxpusher';
