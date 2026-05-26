@@ -4,19 +4,27 @@ setlocal EnableExtensions
 pushd "%~dp0..\.." >nul
 if errorlevel 1 (
   echo [ERROR] Unable to enter the unicall project root.
+  pause
   exit /b 1
 )
 
+set "WAIT_ON_EXIT=0"
 set "MODE=%~1"
-if "%MODE%"=="" set "MODE=check"
+if "%MODE%"=="" (
+  set "MODE=check"
+  set "WAIT_ON_EXIT=1"
+)
+
+rem Keep npm cache inside an ignored project folder to avoid user-profile permission errors.
+set "npm_config_cache=%CD%\.pnpm-store\npm-release-cache"
 
 if /i "%MODE%"=="check" goto :run_checks
 if /i "%MODE%"=="publish" goto :run_checks
 if /i "%MODE%"=="publish-public" goto :run_checks
 
 call :usage
-popd >nul
-exit /b 1
+set "EXIT_CODE=1"
+goto :finish
 
 :run_checks
 echo.
@@ -46,8 +54,8 @@ if /i "%MODE%"=="check" (
   echo   scripts\release\publish-npm.bat publish
   echo To publish a public scoped package, run:
   echo   scripts\release\publish-npm.bat publish-public
-  popd >nul
-  exit /b 0
+  set "EXIT_CODE=0"
+  goto :finish
 )
 
 echo.
@@ -57,8 +65,8 @@ set "CONFIRM="
 set /p "CONFIRM=Type PUBLISH to confirm; any other input cancels: "
 if not "%CONFIRM%"=="PUBLISH" (
   echo [CANCELLED] No npm publish was executed.
-  popd >nul
-  exit /b 0
+  set "EXIT_CODE=0"
+  goto :finish
 )
 
 echo.
@@ -74,14 +82,22 @@ if errorlevel 1 goto :failed
 
 echo.
 echo [DONE] npm publish completed successfully.
-popd >nul
-exit /b 0
+set "EXIT_CODE=0"
+goto :finish
 
 :failed
 echo.
 echo [FAILED] Release flow stopped. Fix the error above and run again.
+set "EXIT_CODE=1"
+goto :finish
+
+:finish
+if "%WAIT_ON_EXIT%"=="1" (
+  echo.
+  pause
+)
 popd >nul
-exit /b 1
+exit /b %EXIT_CODE%
 
 :usage
 echo Usage:
