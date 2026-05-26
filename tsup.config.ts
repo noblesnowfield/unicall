@@ -6,7 +6,7 @@ export default defineConfig([
     format: ['esm', 'cjs'],
     dts: true,
     sourcemap: true,
-    clean: true,
+    clean: false,
     target: 'es2022'
   },
   {
@@ -18,6 +18,21 @@ export default defineConfig([
     sourcemap: true,
     target: 'es2022',
     outDir: 'dist'
+  },
+  {
+    entry: {
+      'unicall.browser': 'browser/index.ts'
+    },
+    format: ['esm'],
+    dts: false,
+    sourcemap: true,
+    target: 'es2022',
+    outDir: 'dist',
+    outExtension() {
+      return {
+        js: '.mjs'
+      };
+    }
   },
   {
     entry: {
