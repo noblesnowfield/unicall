@@ -2,7 +2,10 @@ export { NotificationRuntime, notify } from './runtime';
 export type { AddTargetOptions, SendOptions } from './runtime';
 export {
   composeMiddleware,
+  dedupeMiddleware,
   loggingMiddleware,
+  metricsMiddleware,
+  rateLimitMiddleware,
   retryMiddleware,
   timeoutMiddleware
 } from './middleware';
@@ -86,8 +89,12 @@ export type {
 export type {
   MiddlewareContext,
   MiddlewareNext,
+  DedupeMiddlewareOptions,
+  MetricsMiddlewareOptions,
+  NotificationMetricsEvent,
   NotificationLogger,
   NotificationMiddleware,
+  RateLimitMiddlewareOptions,
   RetryMiddlewareOptions,
   TimeoutMiddlewareOptions
 } from './middleware';
