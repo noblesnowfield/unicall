@@ -9,10 +9,11 @@ export {
   createEmailMimeMessage,
   createGameNotificationEmail,
   formatEmailAddress,
+  resolveSmtpEndpoint,
   resolveSmtpPreset,
   smtpPresets
 } from './email';
-export type { SmtpPreset, SmtpPresetName } from './email';
+export type { ResolvedSmtpEndpoint, SmtpPreset, SmtpPresetName } from './email';
 export type { GameNotificationEmailOptions } from './email';
 export { MiaotixingProvider, miaotixingProviderFactory } from './miaotixing';
 export { PushplusProvider, pushplusProviderFactory } from './pushplus';

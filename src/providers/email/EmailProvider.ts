@@ -5,7 +5,7 @@ import {
 } from '../../errors';
 import { readStringList } from '../shared/query';
 import { createEmailMimeMessage, formatEmailAddress } from './mime';
-import { resolveSmtpPreset } from './smtpPresets';
+import { resolveSmtpEndpoint } from './smtpPresets';
 import { SmtpClient, type SmtpConnectionOptions, type SmtpTransport } from './SmtpClient';
 import type {
   NotificationMessage,
@@ -88,19 +88,42 @@ export const mailtoProviderFactory: ProviderFactory = {
 };
 
 function parseEmailOptions(url: NotificationUrl): EmailProviderOptions {
-  const preset = resolveSmtpPreset(url.query.get('service') ?? url.query.get('provider') ?? undefined);
-  const secure = parseBoolean(url.query.get('secure'), preset?.secure ?? true);
-  const host = preset?.host ?? url.hostname;
-  const port = Number(url.port || preset?.port || (secure ? 465 : 587));
+  const port = url.port;
+  const secure = url.query.get('secure');
+  const startTls = url.query.get('startTls');
+  const endpointOptions: {
+    host: string;
+    port?: string;
+    secure?: string;
+    startTls?: string;
+  } = {
+    host: url.hostname
+  };
+
+  if (port) {
+    endpointOptions.port = port;
+  }
+
+  if (secure !== undefined) {
+    endpointOptions.secure = secure;
+  }
+
+  if (startTls !== undefined) {
+    endpointOptions.startTls = startTls;
+  }
+  const endpoint = resolveSmtpEndpoint(
+    url.query.get('service') ?? url.query.get('provider') ?? undefined,
+    endpointOptions
+  );
   const to = readStringList(url.query.get('to') ?? undefined);
   const from = url.query.get('from') ?? url.username;
   const fromName = url.query.get('fromName') ?? undefined;
 
-  if (!host) {
+  if (!endpoint.host) {
     throw new InvalidProviderConfigError('email', url.protocol, 'missing host');
   }
 
-  if (!Number.isFinite(port)) {
+  if (!Number.isFinite(endpoint.port)) {
     throw new InvalidProviderConfigError('email', url.protocol, 'invalid port');
   }
 
@@ -113,22 +136,14 @@ function parseEmailOptions(url: NotificationUrl): EmailProviderOptions {
   }
 
   return {
-    host,
-    port,
-    secure,
-    startTls: parseBoolean(url.query.get('startTls'), !secure),
+    host: endpoint.host,
+    port: endpoint.port,
+    secure: endpoint.secure,
+    startTls: endpoint.startTls,
     ...(url.username ? { user: url.username } : {}),
     ...(url.password ? { pass: url.password } : {}),
     from,
     ...(fromName ? { fromName } : {}),
     to
   };
-}
-
-function parseBoolean(value: string | undefined | null, fallback: boolean): boolean {
-  if (value === undefined || value === null || value === '') {
-    return fallback;
-  }
-
-  return value === 'true' || value === '1';
 }

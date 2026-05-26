@@ -5,8 +5,16 @@ export {
 } from './EmailProvider';
 export type { SmtpConnectionOptions, SmtpTransport } from './SmtpClient';
 export { createEmailMimeMessage, formatEmailAddress } from './mime';
-export { smtpPresets, resolveSmtpPreset } from './smtpPresets';
-export type { SmtpPreset, SmtpPresetName } from './smtpPresets';
+export {
+  resolveSmtpEndpoint,
+  resolveSmtpPreset,
+  smtpPresets
+} from './smtpPresets';
+export type {
+  ResolvedSmtpEndpoint,
+  SmtpPreset,
+  SmtpPresetName
+} from './smtpPresets';
 export {
   createGameNotificationEmail,
   type GameNotificationEmailOptions

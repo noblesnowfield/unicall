@@ -17,6 +17,7 @@ export {
   miaotixingProviderFactory,
   PushplusProvider,
   pushplusProviderFactory,
+  resolveSmtpEndpoint,
   resolveSmtpPreset,
   smtpProviderFactory,
   smtpPresets,
@@ -26,7 +27,7 @@ export {
   wxPusherProviderFactory
 } from './providers';
 export type { SmtpConnectionOptions, SmtpTransport } from './providers';
-export type { SmtpPreset, SmtpPresetName } from './providers';
+export type { ResolvedSmtpEndpoint, SmtpPreset, SmtpPresetName } from './providers';
 export type { GameNotificationEmailOptions } from './providers';
 export { normalizeProtocol, parseNotificationUrl } from './parser';
 export {

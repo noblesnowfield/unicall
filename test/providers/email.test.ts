@@ -7,6 +7,7 @@ import {
   ProviderRegistry,
   createEmailMimeMessage,
   createGameNotificationEmail,
+  resolveSmtpEndpoint,
   resolveSmtpPreset
 } from '../../src';
 import type { SmtpConnectionOptions, SmtpTransport } from '../../src';
@@ -124,12 +125,51 @@ describe('EmailProvider', () => {
   it('提供常用邮箱 SMTP 预设', () => {
     expect(resolveSmtpPreset('qq')).toEqual({
       host: 'smtp.qq.com',
+      sslPort: 465,
+      startTlsPort: 587
+    });
+    expect(resolveSmtpPreset('gmail')?.host).toBe('smtp.gmail.com');
+    expect(resolveSmtpPreset('163')?.host).toBe('smtp.163.com');
+    expect(resolveSmtpPreset('outlook')?.host).toBe('smtp-mail.outlook.com');
+  });
+
+  it('根据邮箱渠道和加密方式自动解析 SMTP 端点', () => {
+    expect(resolveSmtpEndpoint('qq', {})).toEqual({
+      host: 'smtp.qq.com',
       port: 465,
       secure: true,
       startTls: false
     });
-    expect(resolveSmtpPreset('gmail')?.host).toBe('smtp.gmail.com');
-    expect(resolveSmtpPreset('163')?.host).toBe('smtp.163.com');
+    expect(resolveSmtpEndpoint('qq', { secure: 'false' })).toEqual({
+      host: 'smtp.qq.com',
+      port: 587,
+      secure: false,
+      startTls: true
+    });
+    expect(resolveSmtpEndpoint('outlook', {})).toEqual({
+      host: 'smtp-mail.outlook.com',
+      port: 587,
+      secure: false,
+      startTls: true
+    });
+    expect(resolveSmtpEndpoint('qq', { host: 'smtp.custom.com' })).toEqual({
+      host: 'smtp.custom.com',
+      port: 465,
+      secure: true,
+      startTls: false
+    });
+    expect(resolveSmtpEndpoint('gmail', { port: '2525', secure: 'false' })).toEqual({
+      host: 'smtp.gmail.com',
+      port: 2525,
+      secure: false,
+      startTls: true
+    });
+    expect(resolveSmtpEndpoint('163', { secure: 'false' })).toEqual({
+      host: 'smtp.163.com',
+      port: 465,
+      secure: false,
+      startTls: true
+    });
   });
 
   it('缺少收件人时拒绝创建 mailto Provider', () => {
