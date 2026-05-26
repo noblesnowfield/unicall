@@ -27,7 +27,7 @@ export default {
       default: {
         url:
           process.env.UNICALL_WEBHOOK_DEFAULT_URL ??
-          'webhook://example.com/notice?method=POST'
+          'webhook://127.0.0.1:4317/mock/webhook?scheme=http&method=POST'
       }
     },
 
@@ -78,6 +78,21 @@ export default {
   templates: {
     webhook: {
       demo: {
+        messageType: 'html',
+        template: 'gameNotification',
+        templateOptions: {
+          appName: '通知应用',
+          nickname: 'mzh',
+          eventName: 'Webhook HTML 测试',
+          eventTitle: '本地模拟接收服务已收到通知',
+          eventDescription: 'Webhook Provider 会把 HTML 内容作为 JSON 字段发送给接收端，接收端决定如何展示或转发。',
+          screenshotUrl: 'https://avatars.githubusercontent.com/u/6154722?s=48&v=4',
+          actionUrl: 'http://127.0.0.1:4317/mock/webhook/requests',
+          actionText: '查看最近请求'
+        }
+      },
+      text: {
+        messageType: 'text',
         title: 'Unicall Webhook 测试',
         text: '这是一条 Webhook JSON 测试消息。'
       }

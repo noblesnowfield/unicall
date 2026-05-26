@@ -8,6 +8,7 @@ const configPath = process.env.UNICALL_CONFIG ?? 'unicall.config.local.mjs';
 const distPath = new URL('../../dist/index.js', import.meta.url);
 const assetsRoot = new URL('../../assets/', import.meta.url);
 const wxpusherCallbacks = [];
+const webhookRequests = [];
 
 let unicall;
 
@@ -42,6 +43,29 @@ const server = createServer(async (request, response) => {
       const payload = await readJsonBody(request);
       const result = await sendNotification(payload);
       sendJson(response, result);
+      return;
+    }
+
+    if (request.method === 'POST' && requestUrl.pathname === '/mock/webhook') {
+      const payload = await readJsonBody(request);
+      const receivedAt = new Date().toISOString();
+      webhookRequests.unshift({
+        receivedAt,
+        method: request.method,
+        query: Object.fromEntries(requestUrl.searchParams.entries()),
+        body: payload
+      });
+      webhookRequests.splice(20);
+      sendJson(response, {
+        success: true,
+        receivedAt,
+        body: payload
+      });
+      return;
+    }
+
+    if (request.method === 'GET' && requestUrl.pathname === '/mock/webhook/requests') {
+      sendJson(response, { requests: webhookRequests });
       return;
     }
 
@@ -143,7 +167,7 @@ async function sendNotification(payload) {
   }
 
   if (channel === 'webhook') {
-    const [result] = await unicall.notify(readRequired(values.url, 'webhook.url'), createTextMessage(messageValues), {
+    const [result] = await unicall.notify(readRequired(values.url, 'webhook.url'), createWebhookMessage(messageValues), {
       registry
     });
 
@@ -254,6 +278,14 @@ function createHtmlMessage(values) {
     title: values.title || 'Unicall 测试推送',
     html: values.html || '<h1>Unicall 测试推送</h1><p>这是一条测试消息。</p>'
   };
+}
+
+function createWebhookMessage(values) {
+  if (values.messageType === 'html') {
+    return createHtmlMessage(values);
+  }
+
+  return createTextMessage(values);
 }
 
 function createEmailUrl(values) {
@@ -623,7 +655,9 @@ function renderPage() {
       miaotixing: ['title','text'],
       wxpusherGameNotification: ['template','nickname','appName','eventName','eventTitle','eventDescription','screenshotUrl','actionUrl','actionText'],
       wxpusherRawHtml: ['template','title','html'],
-      webhook: ['title','text']
+      webhookText: ['messageType','title','text'],
+      webhookGameNotification: ['messageType','template','nickname','appName','eventName','eventTitle','eventDescription','screenshotUrl','actionUrl','actionText'],
+      webhookRawHtml: ['messageType','template','title','html']
     };
 
     document.getElementById('reload').onclick = loadConfig;
@@ -703,6 +737,10 @@ function renderPage() {
       if(active === 'wxpusher'){
         return templateValues?.template === 'gameNotification' ? 'wxpusherGameNotification' : 'wxpusherRawHtml';
       }
+      if(active === 'webhook'){
+        if(templateValues?.messageType !== 'html') return 'webhookText';
+        return templateValues?.template === 'rawHtml' ? 'webhookRawHtml' : 'webhookGameNotification';
+      }
       if(active !== 'email') return active;
       if(templateValues?.messageType === 'text') return 'emailText';
       return templateValues?.template === 'rawHtml' ? 'emailRawHtml' : 'emailGameNotification';
@@ -717,7 +755,9 @@ function renderPage() {
       };
       const value = templateValues?.[field] || defaults[field] || '';
       if(field === 'messageType'){
-        return '<div class="field"><label>messageType</label><select data-kind="message" data-field="messageType" data-rerender-message="true"><option value="text" '+(value==='text'?'selected':'')+'>文本邮件</option><option value="html" '+(value!=='text'?'selected':'')+'>HTML 邮件</option></select><span class="hint">选择邮件正文类型；文本只发送 title/text，HTML 可继续选择模板。</span></div>';
+        const textLabel = active === 'email' ? '文本邮件' : '文本消息';
+        const htmlLabel = active === 'email' ? 'HTML 邮件' : 'HTML 消息';
+        return '<div class="field"><label>messageType</label><select data-kind="message" data-field="messageType" data-rerender-message="true"><option value="text" '+(value==='text'?'selected':'')+'>'+textLabel+'</option><option value="html" '+(value!=='text'?'selected':'')+'>'+htmlLabel+'</option></select><span class="hint">选择正文类型；文本只发送 title/text，HTML 可继续选择模板。</span></div>';
       }
       if(field === 'template'){
         const options = Object.entries(emailHtmlTemplates).map(([key,label]) => '<option value="'+key+'" '+(key===value?'selected':'')+'>'+label+'</option>').join('');
