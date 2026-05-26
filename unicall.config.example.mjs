@@ -23,6 +23,14 @@ export default {
       }
     },
 
+    webhook: {
+      default: {
+        url:
+          process.env.UNICALL_WEBHOOK_DEFAULT_URL ??
+          'webhook://example.com/notice?method=POST'
+      }
+    },
+
     miaotixing: {
       default: {
         id: process.env.UNICALL_MIAOTIXING_DEFAULT_ID,
@@ -36,7 +44,8 @@ export default {
       default: {
         appToken: process.env.UNICALL_WXPUSHER_DEFAULT_APP_TOKEN,
         uids: splitList(process.env.UNICALL_WXPUSHER_DEFAULT_UIDS),
-        topicIds: splitNumberList(process.env.UNICALL_WXPUSHER_DEFAULT_TOPIC_IDS)
+        topicIds: splitNumberList(process.env.UNICALL_WXPUSHER_DEFAULT_TOPIC_IDS),
+        template: 'html'
       }
     },
 
@@ -54,10 +63,22 @@ export default {
   },
 
   templates: {
+    webhook: {
+      demo: {
+        title: 'Unicall Webhook 测试',
+        text: '这是一条 Webhook JSON 测试消息。'
+      }
+    },
     email: {
       demo: {
         subject: 'Unicall 邮件测试',
-        html: '<h1>Unicall</h1><p>这是一封 HTML 测试邮件。</p>'
+        html: '<h1>Unicall</h1><p>这是一封 HTML 测试邮件。</p>',
+        attachments: [
+          {
+            name: 'unicall-demo.png',
+            contentId: 'unicall-demo'
+          }
+        ]
       }
     },
     pushplus: {
@@ -69,6 +90,12 @@ export default {
     miaotixing: {
       demo: {
         text: 'Unicall 喵提醒测试'
+      }
+    },
+    wxpusher: {
+      demo: {
+        title: 'Unicall WxPusher 测试',
+        html: '<h1>Unicall</h1><p>这是一条 HTML 测试消息。</p>'
       }
     }
   }
