@@ -71,7 +71,11 @@ async function sendNotification(payload) {
     ...profile,
     ...removeEmpty(payload.values ?? {})
   };
-  const messageValues = removeEmpty(payload.message ?? {});
+  const templateValues = getTemplateValues(config, channel, profileName);
+  const messageValues = {
+    ...templateValues,
+    ...removeEmpty(payload.message ?? {})
+  };
   const registry = unicall.createDefaultProviderRegistry();
 
   if (channel === 'email') {
@@ -283,8 +287,33 @@ function sanitizeConfig(config) {
 
   return {
     defaultProfile: config.defaultProfile ?? 'default',
-    channels
+    channels,
+    templates: config.templates ?? {}
   };
+}
+
+function getTemplateValues(config, channel, profileName) {
+  const channelTemplates = config.templates?.[channel];
+
+  if (!channelTemplates || typeof channelTemplates !== 'object') {
+    return {};
+  }
+
+  const selected =
+    channelTemplates[profileName] ?? channelTemplates.default ?? channelTemplates.demo;
+
+  if (!selected || typeof selected !== 'object') {
+    return {};
+  }
+
+  if (channel === 'email' && selected.templateOptions && typeof selected.templateOptions === 'object') {
+    return {
+      ...selected,
+      ...selected.templateOptions
+    };
+  }
+
+  return selected;
 }
 
 function sanitizeObject(values) {
@@ -506,7 +535,8 @@ function renderPage() {
       document.getElementById('profileHint').textContent = '当前 profile: ' + profile;
       document.getElementById('configForm').innerHTML = renderProfileSelect(profiles, profile) + fields[active].map(field => renderField(field, values[field], true)).join('');
       document.getElementById('profileSelect').onchange = event => { selectedProfiles[active] = event.target.value; renderForms(); };
-      document.getElementById('messageForm').innerHTML = messages[active].map(field => renderMessageField(field)).join('');
+      const templateValues = getTemplateDefaults(active, profile);
+      document.getElementById('messageForm').innerHTML = messages[active].map(field => renderMessageField(field, templateValues)).join('');
     }
     function renderProfileSelect(profiles, profile){
       return '<div class="field full"><label>profile</label><select id="profileSelect">'+profiles.map(item => '<option value="'+item+'" '+(item===profile?'selected':'')+'>'+item+'</option>').join('')+'</select><span class="hint">来自 unicall.config.local.mjs；不存在时回退到 unicall.config.example.mjs</span></div>';
@@ -518,20 +548,38 @@ function renderPage() {
       const hint = secret && value?.configured ? '<span class="hint secret">本地已配置：'+value.masked+'；留空使用本地值</span>' : '';
       return '<div class="field '+(field==='to'||field==='url'?'full':'')+'"><label>'+field+'</label><input data-kind="value" data-field="'+field+'" type="'+type+'" placeholder="'+display.placeholder+'" value="'+display.value+'">'+hint+'</div>';
     }
-    function renderMessageField(field){
+    function getTemplateDefaults(channel, profile){
+      const templates = config.templates?.[channel] || {};
+      const selected = templates[profile] || templates.default || templates.demo || {};
+      if(channel === 'email' && selected.templateOptions){
+        return {...selected, ...selected.templateOptions};
+      }
+      return selected;
+    }
+    function renderMessageField(field, templateValues){
       const defaults = {
         teamName:'运维管理团队', recipientName:'张华', recipientSuffix:'先生/女士', appName:'云端效率大师',
         eventName:'事件名称', eventTitle:'事件标题', eventDescription:'提示内容', screenshotMode:'local',
-        screenshotUrl:'https://avatars.githubusercontent.com/u/6154722?s=48&v=4', actionText:'进入控制台分析异常',
+        screenshotUrl:'https://avatars.githubusercontent.com/u/6154722?s=48&v=4', actionUrl:'https://example.com/game/events', actionText:'进入控制台分析异常',
         title:'Unicall 测试推送', text:'测试推送', html:'<h1>Unicall 测试推送</h1><p>这是一条测试消息。</p>'
       };
+      const value = templateValues?.[field] || defaults[field] || '';
       if(field === 'eventDescription' || field === 'html'){
-        return '<div class="field full"><label>'+field+'</label><textarea data-kind="message" data-field="'+field+'">'+(defaults[field]||'')+'</textarea></div>';
+        return '<div class="field full"><label>'+field+'</label><textarea data-kind="message" data-field="'+field+'">'+value+'</textarea>'+renderMessageHint(field)+'</div>';
       }
       if(field === 'screenshotMode'){
         return '<div class="field"><label>screenshotMode</label><select data-kind="message" data-field="screenshotMode"><option value="local">本地 demo.png</option><option value="url">远程图片 URL</option></select></div>';
       }
-      return '<div class="field '+(field==='actionUrl'||field==='screenshotUrl'?'full':'')+'"><label>'+field+'</label><input data-kind="message" data-field="'+field+'" value="'+(defaults[field]||'')+'" placeholder="'+(field==='actionUrl'?'留空不显示按钮':'')+'"></div>';
+      return '<div class="field '+(field==='actionUrl'||field==='screenshotUrl'?'full':'')+'"><label>'+field+'</label><input data-kind="message" data-field="'+field+'" value="'+value+'" placeholder="'+(field==='actionUrl'?'留空不显示按钮':'')+'">'+renderMessageHint(field)+'</div>';
+    }
+    function renderMessageHint(field){
+      const hints = {
+        actionUrl: '选填：填写后邮件模板显示按钮，留空则不显示按钮。',
+        screenshotUrl: '选填：screenshotMode 选择远程图片 URL 时使用。',
+        eventDescription: '模板内容：事件描述或提示内容。',
+        recipientName: '选填：不填时模板默认显示“用户”。'
+      };
+      return hints[field] ? '<span class="hint">'+hints[field]+'</span>' : '';
     }
     function normalizeValue(value, secret){
       if(secret) return { value:'', placeholder: value?.configured ? '留空使用本地配置值' : '未配置，请填写' };

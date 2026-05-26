@@ -33,10 +33,8 @@ export default {
 
     miaotixing: {
       default: {
-        id: process.env.UNICALL_MIAOTIXING_DEFAULT_ID,
-        app: process.env.UNICALL_MIAOTIXING_DEFAULT_APP,
-        type: process.env.UNICALL_MIAOTIXING_DEFAULT_TYPE ?? 'json',
-        option: process.env.UNICALL_MIAOTIXING_DEFAULT_OPTION
+        // 简易模式只需要喵码；app/type/option 等高级字段可在本地配置里按需增加。
+        id: process.env.UNICALL_MIAOTIXING_DEFAULT_ID
       }
     },
 
