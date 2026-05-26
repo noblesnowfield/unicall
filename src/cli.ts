@@ -2,7 +2,7 @@
 import { createDefaultProviderRegistry } from './providers';
 import { NotificationRuntime } from './runtime';
 import {
-  loadUnicallJsonConfig,
+  loadUnicallConfig,
   loadUrlsFromEnv,
   resolveConfigTargets
 } from './config';
@@ -140,7 +140,7 @@ export async function runCli(argv: readonly string[]): Promise<number> {
   runtime.add([...envUrls, ...command.send.urls]);
 
   if (command.send.configPath) {
-    const config = await loadUnicallJsonConfig(command.send.configPath);
+    const config = await loadUnicallConfig(command.send.configPath);
     runtime.addTargets(
       resolveConfigTargets(config, {
         ...(command.send.profile ? { profile: command.send.profile } : {})
@@ -201,7 +201,7 @@ const helpText = `用法:
   --markdown      按 Markdown 内容发送
   --html          按 HTML 内容发送
   --tag, --tags   按标签选择目标，多个标签用英文逗号分隔
-  --config        读取 JSON 配置文件
+  --config        读取 JSON 或 YAML 配置文件
   --profile       选择配置 profile`;
 
 if (process.argv[1]?.endsWith('cli.js') || process.argv[1]?.endsWith('cli.ts')) {

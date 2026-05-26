@@ -10,6 +10,7 @@ export {
   timeoutMiddleware
 } from './middleware';
 export {
+  loadUnicallConfig,
   loadUnicallJsonConfig,
   loadUrlsFromEnv,
   parseUnicallUrls,

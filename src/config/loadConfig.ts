@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { extname } from 'node:path';
+import { parse as parseYaml } from 'yaml';
 import { InvalidConfigError } from '../errors';
 import type {
   NotificationTargetConfig,
@@ -31,7 +32,19 @@ export async function loadUnicallJsonConfig(path: string): Promise<UnicallConfig
 
   if (extension !== '.json') {
     throw new InvalidConfigError(
-      `暂时只支持 JSON 配置文件，当前文件扩展名为 ${extension || '空'}`
+      `JSON 加载器不支持当前文件扩展名: ${extension || '空'}`
+    );
+  }
+
+  return loadUnicallConfig(path);
+}
+
+export async function loadUnicallConfig(path: string): Promise<UnicallConfig> {
+  const extension = extname(path).toLowerCase();
+
+  if (extension !== '.json' && extension !== '.yaml' && extension !== '.yml') {
+    throw new InvalidConfigError(
+      `仅支持 .json、.yaml 或 .yml 配置文件，当前文件扩展名为 ${extension || '空'}`
     );
   }
 
@@ -46,9 +59,9 @@ export async function loadUnicallJsonConfig(path: string): Promise<UnicallConfig
   let parsed: unknown;
 
   try {
-    parsed = JSON.parse(content);
+    parsed = extension === '.json' ? JSON.parse(content) : parseYaml(content);
   } catch (error) {
-    throw new InvalidConfigError(`JSON 配置解析失败: ${path}`, error);
+    throw new InvalidConfigError(`配置解析失败: ${path}`, error);
   }
 
   return normalizeConfig(parsed);

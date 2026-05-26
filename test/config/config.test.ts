@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   InvalidConfigError,
+  loadUnicallConfig,
   loadUnicallJsonConfig,
   loadUrlsFromEnv,
   parseUnicallUrls,
@@ -78,5 +79,40 @@ describe('config', () => {
     await expect(loadUnicallJsonConfig('unicall.config.yaml')).rejects.toThrow(
       InvalidConfigError
     );
+  });
+
+  it('加载 YAML 配置和 profile 目标', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'unicall-yaml-config-'));
+    const configPath = join(dir, 'unicall.config.yaml');
+
+    await writeFile(
+      configPath,
+      [
+        'targets:',
+        '  - url: webhook://example.com/root',
+        '    tags:',
+        '      - ops',
+        'defaultProfile: production',
+        'profiles:',
+        '  production:',
+        '    targets:',
+        '      - url: pushplus://TOKEN',
+        '        group: alert'
+      ].join('\n'),
+      'utf8'
+    );
+
+    const config = await loadUnicallConfig(configPath);
+
+    expect(resolveConfigTargets(config)).toEqual([
+      {
+        url: 'webhook://example.com/root',
+        tags: ['ops']
+      },
+      {
+        url: 'pushplus://TOKEN',
+        group: 'alert'
+      }
+    ]);
   });
 });

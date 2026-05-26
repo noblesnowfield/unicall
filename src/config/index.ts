@@ -1,5 +1,9 @@
 export { loadUrlsFromEnv, parseUnicallUrls } from './env';
-export { loadUnicallJsonConfig, resolveConfigTargets } from './loadConfig';
+export {
+  loadUnicallConfig,
+  loadUnicallJsonConfig,
+  resolveConfigTargets
+} from './loadConfig';
 export type {
   NotificationTargetConfig,
   ResolveConfigTargetsOptions,
