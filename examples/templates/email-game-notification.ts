@@ -4,8 +4,7 @@ import { createGameNotificationEmail } from '../../src';
 const demoImage = readFileSync(new URL('../../assets/images/demo.png', import.meta.url));
 
 export const emailGameNotificationTemplate = createGameNotificationEmail({
-  teamName: '运维管理团队',
-  recipientName: '张华',
+  nickname: '张华',
   appName: '通知应用',
   eventName: '游戏服务状态通知',
   eventTitle: '副本匹配队列恢复正常',

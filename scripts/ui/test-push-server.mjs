@@ -180,9 +180,7 @@ async function createEmailMessage(values) {
 
   const screenshotMode = values.screenshotMode ?? 'local';
   const baseOptions = {
-    teamName: values.teamName || undefined,
-    recipientName: values.recipientName || undefined,
-    recipientSuffix: values.recipientSuffix || undefined,
+    nickname: values.nickname || undefined,
     appName: values.appName || undefined,
     eventName: values.eventName || '事件名称',
     eventTitle: values.eventTitle || '事件标题',
@@ -571,7 +569,7 @@ function renderPage() {
     };
     const messages = {
       emailText: ['messageType','title','text'],
-      emailGameNotification: ['messageType','template','teamName','recipientName','recipientSuffix','appName','eventName','eventTitle','eventDescription','screenshotMode','screenshotUrl','screenshotBase64','actionUrl','actionText'],
+      emailGameNotification: ['messageType','template','nickname','appName','eventName','eventTitle','eventDescription','screenshotMode','screenshotUrl','screenshotBase64','actionUrl','actionText'],
       emailRawHtml: ['messageType','template','title','html'],
       pushplus: ['title','text'],
       miaotixing: ['title','text'],
@@ -657,7 +655,7 @@ function renderPage() {
     function renderMessageField(field, templateValues){
       const defaults = {
         messageType:'html', template:'gameNotification',
-        teamName:'运维管理团队', recipientName:'张华', recipientSuffix:'先生/女士', appName:'通知应用',
+        nickname:'mzh', appName:'通知应用',
         eventName:'事件名称', eventTitle:'事件标题', eventDescription:'提示内容', screenshotMode:'local',
         screenshotUrl:'https://avatars.githubusercontent.com/u/6154722?s=48&v=4', screenshotBase64:'', actionUrl:'https://example.com/game/events', actionText:'进入控制台分析异常',
         title:'Unicall 测试推送', text:'测试推送', html:'<h1>Unicall 测试推送</h1><p>这是一条测试消息。</p>'
@@ -687,7 +685,7 @@ function renderPage() {
         screenshotUrl: '选填：screenshotMode 选择远程图片 URL 时使用。',
         screenshotBase64: '选填：填写后使用 base64 内联图片；留空则使用远程 URL 或本地 demo.png。',
         eventDescription: '模板内容：事件描述或提示内容。',
-        recipientName: '选填：不填时模板默认显示“用户”。'
+        nickname: '选填：不填时模板默认显示“用户”。'
       };
       return hints[field] ? '<span class="hint">'+hints[field]+'</span>' : '';
     }

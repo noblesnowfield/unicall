@@ -100,7 +100,7 @@ describe('EmailProvider', () => {
       message
     );
 
-    expect(message.html).toContain('运维管理团队 / 用户 先生/女士');
+    expect(message.html).toContain('尊敬的 用户：');
     expect(message.html).toContain('应用');
     expect(message.html).not.toContain('查看事件详情');
     expect(mimeMessage).toContain('Content-ID: <event-screenshot>');

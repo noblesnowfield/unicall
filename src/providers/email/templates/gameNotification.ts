@@ -1,9 +1,7 @@
 import type { NotificationAttachment, NotificationMessage } from '../../../types/public';
 
 export interface GameNotificationEmailOptions {
-  readonly teamName?: string;
-  readonly recipientName?: string;
-  readonly recipientSuffix?: string;
+  readonly nickname?: string;
   readonly appName?: string;
   readonly eventName: string;
   readonly eventTitle: string;
@@ -23,9 +21,7 @@ export interface GameNotificationEmailOptions {
 export function createGameNotificationEmail(
   options: GameNotificationEmailOptions
 ): NotificationMessage {
-  const teamName = options.teamName ?? '运维管理团队';
-  const recipientName = options.recipientName ?? '用户';
-  const recipientSuffix = options.recipientSuffix ?? '先生/女士';
+  const nickname = options.nickname ?? '用户';
   const appName = options.appName ?? '应用';
   const screenshotCid = 'event-screenshot';
   const screenshotSource = options.screenshotUrl ?? `cid:${screenshotCid}`;
@@ -35,9 +31,7 @@ export function createGameNotificationEmail(
     title: `${appName} - ${options.eventTitle}`,
     html: createGameNotificationHtml({
       ...options,
-      teamName,
-      recipientName,
-      recipientSuffix,
+      nickname,
       appName,
       screenshotSource
     }),
@@ -53,9 +47,7 @@ interface ResolvedGameNotificationEmailOptions
       | 'eventDescription'
       | 'eventName'
       | 'eventTitle'
-      | 'recipientName'
-      | 'recipientSuffix'
-      | 'teamName'
+      | 'nickname'
     >
   > {
   readonly actionUrl?: string;
@@ -87,7 +79,7 @@ function createGameNotificationHtml(
           </tr>
           <tr>
             <td style="padding:30px 36px;">
-              <p style="margin:0 0 16px;font-size:16px;line-height:1.7;font-weight:600;color:#1f2937;">尊敬的 ${escapeHtml(options.teamName)} / ${escapeHtml(options.recipientName)} ${escapeHtml(options.recipientSuffix)}：</p>
+              <p style="margin:0 0 16px;font-size:16px;line-height:1.7;font-weight:600;color:#1f2937;">尊敬的 ${escapeHtml(options.nickname)}：</p>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#4b5563;"><strong style="color:#2563eb;">${escapeHtml(options.appName)}</strong> 触发了一次事件通知，请查看以下详情。</p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-left:4px solid #2563eb;border-radius:8px;margin-bottom:24px;">
                 <tr>
