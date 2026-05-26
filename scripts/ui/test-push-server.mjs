@@ -122,6 +122,20 @@ async function sendNotification(payload) {
 }
 
 async function createEmailMessage(values) {
+  if (values.messageType === 'text') {
+    return {
+      title: values.title || 'Unicall 文本邮件测试',
+      text: values.text || '这是一封文本测试邮件。'
+    };
+  }
+
+  if (values.template === 'rawHtml') {
+    return {
+      title: values.title || 'Unicall HTML 邮件测试',
+      html: values.html || '<h1>Unicall HTML 邮件测试</h1><p>这是一封 HTML 测试邮件。</p>'
+    };
+  }
+
   const screenshotMode = values.screenshotMode ?? 'local';
   const baseOptions = {
     teamName: values.teamName || undefined,
@@ -134,6 +148,13 @@ async function createEmailMessage(values) {
     actionUrl: values.actionUrl || undefined,
     actionText: values.actionText || undefined
   };
+
+  if (values.screenshotBase64) {
+    return unicall.createGameNotificationEmail({
+      ...baseOptions,
+      screenshotBase64: values.screenshotBase64
+    });
+  }
 
   if (screenshotMode === 'url' && values.screenshotUrl) {
     return unicall.createGameNotificationEmail({
@@ -502,6 +523,10 @@ function renderPage() {
     let config = {};
     let active = 'email';
     let selectedProfiles = {};
+    const emailHtmlTemplates = {
+      gameNotification: '游戏通知模板',
+      rawHtml: '自定义 HTML'
+    };
 
     const fields = {
       email: ['service','host','port','secure','user','pass','from','fromName','to'],
@@ -511,7 +536,9 @@ function renderPage() {
       webhook: ['url']
     };
     const messages = {
-      email: ['teamName','recipientName','recipientSuffix','appName','eventName','eventTitle','eventDescription','screenshotMode','screenshotUrl','screenshotBase64','actionUrl','actionText'],
+      emailText: ['messageType','title','text'],
+      emailGameNotification: ['messageType','template','teamName','recipientName','recipientSuffix','appName','eventName','eventTitle','eventDescription','screenshotMode','screenshotUrl','screenshotBase64','actionUrl','actionText'],
+      emailRawHtml: ['messageType','template','title','html'],
       pushplus: ['title','text'],
       miaotixing: ['title','text'],
       wxpusher: ['title','html'],
@@ -548,7 +575,7 @@ function renderPage() {
       const serviceSelect = document.querySelector('[data-field="service"]');
       if(serviceSelect) serviceSelect.onchange = event => applyEmailPresetToInputs(event.target.value);
       const templateValues = getTemplateDefaults(active, profile);
-      document.getElementById('messageForm').innerHTML = messages[active].map(field => renderMessageField(field, templateValues)).join('');
+      renderMessageForm(templateValues);
     }
     function renderProfileSelect(profiles, profile){
       return '<div class="field full"><label>profile</label><select id="profileSelect">'+profiles.map(item => '<option value="'+item+'" '+(item===profile?'selected':'')+'>'+item+'</option>').join('')+'</select><span class="hint">来自 unicall.config.local.mjs；不存在时回退到 unicall.config.example.mjs</span></div>';
@@ -573,14 +600,34 @@ function renderPage() {
       }
       return selected;
     }
+    function renderMessageForm(templateValues){
+      const messageKey = getMessageKey(templateValues);
+      document.getElementById('messageForm').innerHTML = messages[messageKey].map(field => renderMessageField(field, templateValues)).join('');
+      document.querySelectorAll('[data-rerender-message="true"]').forEach(input => {
+        input.onchange = () => renderMessageForm(collect('message'));
+      });
+    }
+    function getMessageKey(templateValues){
+      if(active !== 'email') return active;
+      if(templateValues?.messageType === 'text') return 'emailText';
+      return templateValues?.template === 'rawHtml' ? 'emailRawHtml' : 'emailGameNotification';
+    }
     function renderMessageField(field, templateValues){
       const defaults = {
+        messageType:'html', template:'gameNotification',
         teamName:'运维管理团队', recipientName:'张华', recipientSuffix:'先生/女士', appName:'云端效率大师',
         eventName:'事件名称', eventTitle:'事件标题', eventDescription:'提示内容', screenshotMode:'local',
         screenshotUrl:'https://avatars.githubusercontent.com/u/6154722?s=48&v=4', screenshotBase64:'', actionUrl:'https://example.com/game/events', actionText:'进入控制台分析异常',
         title:'Unicall 测试推送', text:'测试推送', html:'<h1>Unicall 测试推送</h1><p>这是一条测试消息。</p>'
       };
       const value = templateValues?.[field] || defaults[field] || '';
+      if(field === 'messageType'){
+        return '<div class="field"><label>messageType</label><select data-kind="message" data-field="messageType" data-rerender-message="true"><option value="text" '+(value==='text'?'selected':'')+'>文本邮件</option><option value="html" '+(value!=='text'?'selected':'')+'>HTML 邮件</option></select><span class="hint">选择邮件正文类型；文本只发送 title/text，HTML 可继续选择模板。</span></div>';
+      }
+      if(field === 'template'){
+        const options = Object.entries(emailHtmlTemplates).map(([key,label]) => '<option value="'+key+'" '+(key===value?'selected':'')+'>'+label+'</option>').join('');
+        return '<div class="field"><label>template</label><select data-kind="message" data-field="template" data-rerender-message="true">'+options+'</select><span class="hint">HTML 模板：游戏通知模板、自定义 HTML。</span></div>';
+      }
       if(field === 'screenshotBase64'){
         return '<div class="field full"><label>'+field+'</label><textarea data-kind="message" data-field="'+field+'" placeholder="选填：粘贴图片 base64，优先级高于本地 demo 图">'+value+'</textarea>'+renderMessageHint(field)+'</div>';
       }
