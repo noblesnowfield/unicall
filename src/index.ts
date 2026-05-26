@@ -1,5 +1,9 @@
 export { NotificationRuntime, notify } from './runtime';
-export type { AddTargetOptions, SendOptions } from './runtime';
+export type {
+  AddTargetOptions,
+  DeliveryStrategy,
+  SendOptions
+} from './runtime';
 export {
   composeMiddleware,
   dedupeMiddleware,

@@ -14,13 +14,16 @@ export function dedupeMiddleware(
 
   return function dedupe(context, next) {
     const now = Date.now();
-    const key = options.key?.(context) ?? context.message.dedupeKey;
+    const configuredKey = options.key?.(context);
+    const key = configuredKey ?? context.message.dedupeKey;
 
     if (!key) {
       return next();
     }
 
-    const expiresAt = seen.get(key);
+    const cacheKey =
+      configuredKey ?? `${context.url.originalUrl}:${context.provider.name}:${key}`;
+    const expiresAt = seen.get(cacheKey);
 
     if (expiresAt && expiresAt > now) {
       return {
@@ -34,7 +37,7 @@ export function dedupeMiddleware(
       };
     }
 
-    seen.set(key, now + options.ttlMs);
+    seen.set(cacheKey, now + options.ttlMs);
     cleanupExpired(seen, now);
 
     return next();

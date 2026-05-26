@@ -74,4 +74,5 @@ export interface NotifyOptions extends NotificationRuntimeOptions {
   readonly signal?: AbortSignal;
   readonly middleware?: readonly NotificationMiddleware[];
   readonly tags?: readonly string[];
+  readonly strategy?: import('../runtime/NotificationRuntime').DeliveryStrategy;
 }

@@ -256,4 +256,114 @@ describe('NotificationRuntime', () => {
     expect(results).toHaveLength(1);
     expect(results[0]?.protocol).toBe('beta');
   });
+
+  it('支持按 group 选择目标并按顺序降级到成功 Provider', async () => {
+    const calls: string[] = [];
+    const registry = new ProviderRegistry([
+      createMockFactory('primary', {
+        send() {
+          calls.push('primary');
+
+          return {
+            provider: 'primary-provider',
+            protocol: 'primary',
+            success: false
+          };
+        }
+      }),
+      createMockFactory('backup', {
+        send() {
+          calls.push('backup');
+
+          return {
+            provider: 'backup-provider',
+            protocol: 'backup',
+            success: true
+          };
+        }
+      }),
+      createMockFactory('unrelated', {
+        send() {
+          calls.push('unrelated');
+
+          return {
+            provider: 'unrelated-provider',
+            protocol: 'unrelated',
+            success: true
+          };
+        }
+      })
+    ]);
+    const runtime = new NotificationRuntime({ registry }).addTargets([
+      {
+        url: 'primary://token',
+        group: 'alert'
+      },
+      {
+        url: 'backup://token',
+        group: 'alert'
+      },
+      {
+        url: 'unrelated://token',
+        group: 'report'
+      }
+    ]);
+
+    const results = await runtime.send(
+      {
+        text: 'hello'
+      },
+      {
+        group: 'alert',
+        strategy: 'fallback'
+      }
+    );
+
+    expect(results.map((item) => item.success)).toEqual([false, true]);
+    expect(calls).toEqual(['primary', 'backup']);
+  });
+
+  it('fallback 在首个成功目标后停止发送', async () => {
+    const calls: string[] = [];
+    const registry = new ProviderRegistry([
+      createMockFactory('first', {
+        send() {
+          calls.push('first');
+
+          return {
+            provider: 'first-provider',
+            protocol: 'first',
+            success: true
+          };
+        }
+      }),
+      createMockFactory('second', {
+        send() {
+          calls.push('second');
+
+          return {
+            provider: 'second-provider',
+            protocol: 'second',
+            success: true
+          };
+        }
+      })
+    ]);
+    const runtime = new NotificationRuntime({ registry }).add([
+      'first://token',
+      'second://token'
+    ]);
+
+    const results = await runtime.send(
+      {
+        text: 'hello'
+      },
+      {
+        strategy: 'fallback'
+      }
+    );
+
+    expect(results).toHaveLength(1);
+    expect(calls).toEqual(['first']);
+  });
 });

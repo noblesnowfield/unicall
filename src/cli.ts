@@ -14,6 +14,8 @@ export interface CliSendOptions {
   readonly format: 'text' | 'markdown' | 'html';
   readonly urls: readonly string[];
   readonly tags: readonly string[];
+  readonly fallback: boolean;
+  readonly group?: string;
   readonly configPath?: string;
   readonly profile?: string;
 }
@@ -41,6 +43,8 @@ export function parseCliArgs(argv: readonly string[]): CliCommand {
   let format: CliSendOptions['format'] = 'text';
   let configPath: string | undefined;
   let profile: string | undefined;
+  let group: string | undefined;
+  let fallback = false;
   const urls: string[] = [];
   const tags: string[] = [];
 
@@ -85,6 +89,17 @@ export function parseCliArgs(argv: readonly string[]): CliCommand {
       continue;
     }
 
+    if (item === '--group') {
+      group = readNextValue(args, index, item);
+      index += 1;
+      continue;
+    }
+
+    if (item === '--fallback') {
+      fallback = true;
+      continue;
+    }
+
     if (item === '--profile') {
       profile = readNextValue(args, index, item);
       index += 1;
@@ -106,6 +121,8 @@ export function parseCliArgs(argv: readonly string[]): CliCommand {
       format,
       urls,
       tags,
+      fallback,
+      ...(group ? { group } : {}),
       ...(configPath ? { configPath } : {}),
       ...(profile ? { profile } : {})
     }
@@ -153,7 +170,9 @@ export async function runCli(argv: readonly string[]): Promise<number> {
   }
 
   const results = await runtime.send(buildCliMessage(command.send), {
-    ...(command.send.tags.length > 0 ? { tags: command.send.tags } : {})
+    ...(command.send.tags.length > 0 ? { tags: command.send.tags } : {}),
+    ...(command.send.group ? { group: command.send.group } : {}),
+    ...(command.send.fallback ? { strategy: 'fallback' } : {})
   });
 
   printResults(results);
@@ -193,7 +212,7 @@ function printResults(results: readonly SendResult[]): void {
 
 const helpText = `用法:
   unicall send -t 标题 -b 内容 URL
-  unicall send -b 内容 --markdown --tag ops --config unicall.config.json
+  unicall send -b 内容 --markdown --group alert --fallback --config unicall.config.yaml
 
 选项:
   -t, --title     消息标题
@@ -201,6 +220,8 @@ const helpText = `用法:
   --markdown      按 Markdown 内容发送
   --html          按 HTML 内容发送
   --tag, --tags   按标签选择目标，多个标签用英文逗号分隔
+  --group         仅发送到指定目标分组
+  --fallback      按目标顺序发送，成功后停止降级尝试
   --config        读取 JSON 或 YAML 配置文件
   --profile       选择配置 profile`;
 

@@ -28,10 +28,14 @@ export interface AddTargetOptions {
   readonly group?: string;
 }
 
+export type DeliveryStrategy = 'all' | 'fallback';
+
 export interface SendOptions {
   readonly signal?: AbortSignal;
   readonly middleware?: readonly NotificationMiddleware[];
   readonly tags?: readonly string[];
+  readonly group?: string;
+  readonly strategy?: DeliveryStrategy;
 }
 
 export class NotificationRuntime {
@@ -99,8 +103,13 @@ export class NotificationRuntime {
     const pipeline = composeMiddleware(middleware);
     const selectedTargets = selectTargets(
       this.targets,
-      options.tags ?? message.tags
+      options.tags ?? message.tags,
+      options.group
     );
+    if (options.strategy === 'fallback') {
+      return sendWithFallback(selectedTargets, message, options, pipeline);
+    }
+
     const tasks = selectedTargets.map((target) =>
       sendToTarget(target, message, options, pipeline)
     );
@@ -132,17 +141,21 @@ export class NotificationRuntime {
 
 function selectTargets(
   targets: readonly RuntimeTarget[],
-  tags?: readonly string[]
+  tags?: readonly string[],
+  group?: string
 ): readonly RuntimeTarget[] {
-  if (!tags || tags.length === 0) {
-    return targets;
-  }
+  const requiredTags = tags && tags.length > 0 ? new Set(tags) : undefined;
 
-  const requiredTags = new Set(tags);
+  return targets.filter((target) => {
+    if (group && target.group !== group) {
+      return false;
+    }
 
-  return targets.filter((target) =>
-    target.tags.some((tag) => requiredTags.has(tag))
-  );
+    return (
+      !requiredTags ||
+      target.tags.some((tag) => requiredTags.has(tag))
+    );
+  });
 }
 
 function assertMessageHasContent(message: NotificationMessage): void {
@@ -188,6 +201,27 @@ async function sendToTarget(
       error: normalizedError
     };
   }
+}
+
+async function sendWithFallback(
+  targets: readonly RuntimeTarget[],
+  message: NotificationMessage,
+  options: SendOptions,
+  pipeline: ReturnType<typeof composeMiddleware>
+): Promise<SendResult[]> {
+  const results: SendResult[] = [];
+
+  for (const target of targets) {
+    const result = await sendToTarget(target, message, options, pipeline);
+
+    results.push(result);
+
+    if (result.success) {
+      break;
+    }
+  }
+
+  return results;
 }
 
 async function dispatchProvider(

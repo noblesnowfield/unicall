@@ -226,6 +226,42 @@ describe('built-in middleware', () => {
     expect(sends).toBe(1);
   });
 
+  it('dedupeMiddleware 不把同一消息的不同目标误判为重复发送', async () => {
+    let sends = 0;
+    const registry = new ProviderRegistry([
+      createFactory('first-target', async (): Promise<SendResult> => {
+        sends += 1;
+
+        return {
+          provider: 'first-target-provider',
+          protocol: 'first-target',
+          success: true
+        };
+      }),
+      createFactory('second-target', async (): Promise<SendResult> => {
+        sends += 1;
+
+        return {
+          provider: 'second-target-provider',
+          protocol: 'second-target',
+          success: true
+        };
+      })
+    ]);
+    const runtime = new NotificationRuntime({
+      registry,
+      middleware: [dedupeMiddleware({ ttlMs: 1000 })]
+    }).add(['first-target://token', 'second-target://token']);
+
+    const results = await runtime.send({
+      text: 'hello',
+      dedupeKey: 'multi-target'
+    });
+
+    expect(results).toHaveLength(2);
+    expect(sends).toBe(2);
+  });
+
   it('metricsMiddleware 记录发送结果指标', async () => {
     const events: Array<{
       readonly provider: string;

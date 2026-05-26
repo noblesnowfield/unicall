@@ -12,6 +12,9 @@ describe('cli', () => {
       '--markdown',
       '--tag',
       'ops,prod',
+      '--group',
+      'alert',
+      '--fallback',
       'webhook://example.com/notify'
     ]);
 
@@ -22,7 +25,9 @@ describe('cli', () => {
         body: '发布完成',
         format: 'markdown',
         urls: ['webhook://example.com/notify'],
-        tags: ['ops', 'prod']
+        tags: ['ops', 'prod'],
+        fallback: true,
+        group: 'alert'
       }
     });
   });
@@ -33,7 +38,8 @@ describe('cli', () => {
       body: '<b>ok</b>',
       format: 'html',
       urls: [],
-      tags: []
+      tags: [],
+      fallback: false
     });
 
     expect(message).toEqual({
