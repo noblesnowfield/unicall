@@ -406,10 +406,26 @@ function normalizeSendResult(result) {
           name: result.error.name,
           code: result.error.code,
           message: result.error.message,
-          retryable: result.error.retryable
+          retryable: result.error.retryable,
+          cause: normalizeErrorCause(result.error.cause)
         }
       : undefined
   };
+}
+
+function normalizeErrorCause(cause) {
+  if (cause === undefined) {
+    return undefined;
+  }
+
+  if (cause instanceof Error) {
+    return {
+      name: cause.name,
+      message: cause.message
+    };
+  }
+
+  return cause;
 }
 
 function readRequired(value, field) {
