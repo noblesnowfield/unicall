@@ -46,6 +46,13 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    if (request.method === 'POST' && requestUrl.pathname === '/api/notify') {
+      const payload = await readJsonBody(request);
+      const result = await sendSelectedChannels(payload);
+      sendJson(response, result);
+      return;
+    }
+
     if (request.method === 'POST' && requestUrl.pathname === '/mock/webhook') {
       const payload = await readJsonBody(request);
       const receivedAt = new Date().toISOString();
@@ -143,7 +150,7 @@ async function sendNotification(payload) {
   }
 
   if (channel === 'pushplus') {
-    const [result] = await unicall.notify(createPushplusUrl(values), createTextMessage(messageValues), {
+    const [result] = await unicall.notify(createPushplusUrl(values), createPushplusMessage(messageValues), {
       registry
     });
 
@@ -175,6 +182,97 @@ async function sendNotification(payload) {
   }
 
   throw new Error(`暂不支持的渠道: ${channel}`);
+}
+
+async function sendSelectedChannels(payload) {
+  const config = await loadConfig();
+  const sourceProfileName = payload.profile ?? config.defaultProfile ?? 'default';
+  const selectedChannels = readList(payload.channels).filter((channel) => channel !== 'webhook');
+  const messageValues = removeEmpty(payload.message ?? {});
+
+  if (selectedChannels.length === 0) {
+    throw new Error('请至少选择一个 Webhook 聚合转发渠道');
+  }
+
+  const results = [];
+
+  for (const channel of selectedChannels) {
+    const profileName = getProfileName(config, channel, sourceProfileName);
+    const profile = getProfile(config, channel, profileName);
+    const templateValues = getTemplateValues(config, channel, profileName);
+    const values = {
+      ...profile,
+      ...removeEmpty(payload.channelValues?.[channel] ?? {})
+    };
+    const mergedMessage = {
+      ...templateValues,
+      ...messageValues
+    };
+
+    try {
+      const result = await sendChannel(channel, profileName, values, mergedMessage);
+
+      results.push({
+        channel,
+        profile: profileName,
+        ...result
+      });
+    } catch (error) {
+      results.push({
+        channel,
+        profile: profileName,
+        success: false,
+        error: normalizeThrownError(error)
+      });
+    }
+  }
+
+  return {
+    success: results.every((result) => result.success === true),
+    provider: 'webhook',
+    protocol: 'webhook',
+    mode: 'local-aggregator',
+    sourceProfile: sourceProfileName,
+    results
+  };
+}
+
+async function sendChannel(channel, profileName, values, messageValues) {
+  const registry = unicall.createDefaultProviderRegistry();
+
+  if (channel === 'email') {
+    const [result] = await unicall.notify(createEmailUrl(values), await createEmailMessage(messageValues), {
+      registry
+    });
+
+    return normalizeSendResult(result);
+  }
+
+  if (channel === 'pushplus') {
+    const [result] = await unicall.notify(createPushplusUrl(values), createTextMessage(messageValues), {
+      registry
+    });
+
+    return normalizeSendResult(result);
+  }
+
+  if (channel === 'miaotixing') {
+    const [result] = await unicall.notify(createMiaotixingUrl(values), createTextMessage(messageValues), {
+      registry
+    });
+
+    return normalizeSendResult(result);
+  }
+
+  if (channel === 'wxpusher') {
+    const [result] = await unicall.notify(createWxPusherUrl(values), createHtmlMessage(messageValues), {
+      registry
+    });
+
+    return normalizeSendResult(result);
+  }
+
+  throw new Error(`暂不支持聚合转发渠道: ${channel}/${profileName}`);
 }
 
 async function createWxPusherQrCode(payload) {
@@ -283,6 +381,21 @@ function createHtmlMessage(values) {
 function createWebhookMessage(values) {
   if (values.messageType === 'html') {
     return createHtmlMessage(values);
+  }
+
+  return createTextMessage(values);
+}
+
+function createPushplusMessage(values) {
+  if (values.messageType === 'html' || values.template === 'gameNotification' || values.template === 'rawHtml') {
+    return createHtmlMessage(values);
+  }
+
+  if (values.markdown) {
+    return {
+      title: values.title || 'Unicall 测试推送',
+      markdown: values.markdown
+    };
   }
 
   return createTextMessage(values);
@@ -398,6 +511,24 @@ function getProfile(config, channel, profileName) {
   return profile;
 }
 
+function getProfileName(config, channel, preferredProfileName) {
+  const profiles = config.channels?.[channel] ?? {};
+
+  if (profiles[preferredProfileName]) {
+    return preferredProfileName;
+  }
+
+  if (profiles[config.defaultProfile ?? 'default']) {
+    return config.defaultProfile ?? 'default';
+  }
+
+  if (profiles.default) {
+    return 'default';
+  }
+
+  return Object.keys(profiles)[0] ?? preferredProfileName;
+}
+
 function sanitizeConfig(config) {
   const channels = {};
 
@@ -471,6 +602,20 @@ function normalizeErrorCause(cause) {
   }
 
   return cause;
+}
+
+function normalizeThrownError(error) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message
+    };
+  }
+
+  return {
+    name: 'Error',
+    message: String(error)
+  };
 }
 
 function readRequired(value, field) {
@@ -645,7 +790,7 @@ function renderPage() {
       pushplus: ['token','topic','template'],
       miaotixing: ['id','app','type','option'],
       wxpusher: ['appToken','uids','topicIds','appQrCodeUrl','qrCodeUrl','subscribeUrl','callbackUrl','qrExtra','qrValidTime'],
-      webhook: ['url']
+      webhook: ['url','webhookTargets']
     };
     const messages = {
       emailText: ['messageType','title','text'],
@@ -703,6 +848,11 @@ function renderPage() {
         const current = typeof value === 'string' ? value : '';
         const options = ['', ...Object.keys(smtpPresets)].map(item => '<option value="'+item+'" '+(item===current?'selected':'')+'>'+(item || 'custom')+'</option>').join('');
         return '<div class="field"><label>service</label><select data-kind="value" data-field="service">'+options+'</select><span class="hint">选择后自动填写 host、port、secure；custom 表示手动填写 SMTP。</span></div>';
+      }
+      if(active === 'webhook' && field === 'webhookTargets'){
+        const selected = readUiList(value);
+        const options = channels.filter(channel => channel !== 'webhook').map(channel => '<option value="'+channel+'" '+(selected.includes(channel)?'selected':'')+'>'+channel+'</option>').join('');
+        return '<div class="field full"><label>聚合转发渠道</label><select data-kind="value" data-field="webhookTargets" multiple size="4">'+options+'</select><span class="hint">可多选。选择后点击发送会调用本地 /api/notify，一次触发这些渠道；不选择则只测试普通 Webhook POST。</span></div>';
       }
       const display = normalizeValue(value);
       return '<div class="field '+(field==='to'||field==='url'||field==='appQrCodeUrl'||field==='qrCodeUrl'||field==='subscribeUrl'||field==='callbackUrl'?'full':'')+'"><label>'+field+'</label><input data-kind="value" data-field="'+field+'" type="text" placeholder="'+display.placeholder+'" value="'+display.value+'">'+renderConfigHint(field)+'</div>';
@@ -906,14 +1056,29 @@ function renderPage() {
       const values = collect('value');
       const message = collect('message');
       document.getElementById('status').textContent = '发送中...';
-      const res = await fetch('/api/send', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({channel:active, profile, values, message})});
+      const endpoint = active === 'webhook' && readUiList(values.webhookTargets).length > 0 ? '/api/notify' : '/api/send';
+      const payload = endpoint === '/api/notify'
+        ? {profile, channels: values.webhookTargets, message}
+        : {channel:active, profile, values, message};
+      const res = await fetch(endpoint, {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(payload)});
       const body = await res.json();
       document.getElementById('status').textContent = JSON.stringify(body, null, 2);
     }
     function collect(kind){
       const out = {};
-      document.querySelectorAll('[data-kind="'+kind+'"]').forEach(input => out[input.dataset.field] = input.value);
+      document.querySelectorAll('[data-kind="'+kind+'"]').forEach(input => {
+        if(input instanceof HTMLSelectElement && input.multiple){
+          out[input.dataset.field] = Array.from(input.selectedOptions).map(option => option.value);
+          return;
+        }
+        out[input.dataset.field] = input.value;
+      });
       return out;
+    }
+    function readUiList(value){
+      if(Array.isArray(value)) return value.map(String).map(item => item.trim()).filter(Boolean);
+      if(typeof value === 'string') return value.split(',').map(item => item.trim()).filter(Boolean);
+      return [];
     }
   </script>
 </body>
