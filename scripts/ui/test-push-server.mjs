@@ -490,6 +490,15 @@ function renderPage() {
   <script>
     const channels = ['email','pushplus','miaotixing','wxpusher','webhook'];
     const secretFields = new Set(['token','pass','appToken','id']);
+    const smtpPresets = {
+      qq: {host:'smtp.qq.com', sslPort:465, startTlsPort:587, defaultSecure:true},
+      foxmail: {host:'smtp.qq.com', sslPort:465, startTlsPort:587, defaultSecure:true},
+      '163': {host:'smtp.163.com', sslPort:465, defaultSecure:true},
+      gmail: {host:'smtp.gmail.com', sslPort:465, startTlsPort:587, defaultSecure:true},
+      google: {host:'smtp.gmail.com', sslPort:465, startTlsPort:587, defaultSecure:true},
+      outlook: {host:'smtp-mail.outlook.com', startTlsPort:587, defaultSecure:false},
+      hotmail: {host:'smtp-mail.outlook.com', startTlsPort:587, defaultSecure:false}
+    };
     let config = {};
     let active = 'email';
     let selectedProfiles = {};
@@ -530,11 +539,14 @@ function renderPage() {
     }
     function renderForms(){
       const profile = currentProfile();
-      const values = config.channels?.[active]?.[profile] || {};
+      const rawValues = config.channels?.[active]?.[profile] || {};
+      const values = active === 'email' ? applyEmailPresetDefaults(rawValues) : rawValues;
       const profiles = Object.keys(config.channels?.[active] || {});
       document.getElementById('profileHint').textContent = '当前 profile: ' + profile;
       document.getElementById('configForm').innerHTML = renderProfileSelect(profiles, profile) + fields[active].map(field => renderField(field, values[field], true)).join('');
       document.getElementById('profileSelect').onchange = event => { selectedProfiles[active] = event.target.value; renderForms(); };
+      const serviceSelect = document.querySelector('[data-field="service"]');
+      if(serviceSelect) serviceSelect.onchange = event => applyEmailPresetToInputs(event.target.value);
       const templateValues = getTemplateDefaults(active, profile);
       document.getElementById('messageForm').innerHTML = messages[active].map(field => renderMessageField(field, templateValues)).join('');
     }
@@ -542,6 +554,11 @@ function renderPage() {
       return '<div class="field full"><label>profile</label><select id="profileSelect">'+profiles.map(item => '<option value="'+item+'" '+(item===profile?'selected':'')+'>'+item+'</option>').join('')+'</select><span class="hint">来自 unicall.config.local.mjs；不存在时回退到 unicall.config.example.mjs</span></div>';
     }
     function renderField(field, value, configField){
+      if(active === 'email' && field === 'service'){
+        const current = typeof value === 'string' ? value : '';
+        const options = ['', ...Object.keys(smtpPresets)].map(item => '<option value="'+item+'" '+(item===current?'selected':'')+'>'+(item || 'custom')+'</option>').join('');
+        return '<div class="field"><label>service</label><select data-kind="value" data-field="service">'+options+'</select><span class="hint">选择后自动填写 host、port、secure；custom 表示手动填写 SMTP。</span></div>';
+      }
       const secret = secretFields.has(field);
       const display = normalizeValue(value, secret);
       const type = secret ? 'password' : 'text';
@@ -590,6 +607,34 @@ function renderPage() {
       if(Array.isArray(value)) return { value:value.join(','), placeholder:'' };
       if(typeof value === 'object' && value) return { value:'', placeholder:'' };
       return { value:value ?? '', placeholder:'' };
+    }
+    function applyEmailPresetDefaults(values){
+      const service = typeof values.service === 'string' ? values.service : '';
+      const resolved = resolveEmailPreset(service, values.secure);
+      if(!resolved) return values;
+      return {
+        ...values,
+        host: values.host || resolved.host,
+        port: values.port || resolved.port,
+        secure: values.secure ?? String(resolved.secure)
+      };
+    }
+    function applyEmailPresetToInputs(service){
+      const resolved = resolveEmailPreset(service);
+      if(!resolved) return;
+      const hostInput = document.querySelector('[data-kind="value"][data-field="host"]');
+      const portInput = document.querySelector('[data-kind="value"][data-field="port"]');
+      const secureInput = document.querySelector('[data-kind="value"][data-field="secure"]');
+      if(hostInput) hostInput.value = resolved.host;
+      if(portInput) portInput.value = String(resolved.port);
+      if(secureInput) secureInput.value = String(resolved.secure);
+    }
+    function resolveEmailPreset(service, secureValue){
+      const preset = smtpPresets[service];
+      if(!preset) return null;
+      const secure = secureValue === undefined || secureValue === '' ? preset.defaultSecure : secureValue === true || secureValue === 'true' || secureValue === '1';
+      const port = secure ? preset.sslPort || preset.startTlsPort || 465 : preset.startTlsPort || preset.sslPort || 587;
+      return {host:preset.host, port, secure};
     }
     async function send(){
       const profile = currentProfile();
