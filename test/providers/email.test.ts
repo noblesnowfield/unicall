@@ -101,9 +101,24 @@ describe('EmailProvider', () => {
 
     expect(message.html).toContain('运维管理团队 / 用户 先生/女士');
     expect(message.html).toContain('应用');
+    expect(message.html).not.toContain('查看事件详情');
     expect(mimeMessage).toContain('Content-ID: <event-screenshot>');
     expect(mimeMessage).toContain('AQID');
     expect(mimeMessage).not.toContain('QVFJRA==');
+  });
+
+  it('提供 actionUrl 时渲染邮件按钮', () => {
+    const message = createGameNotificationEmail({
+      eventName: '事件名称',
+      eventTitle: '事件标题',
+      eventDescription: '提示内容',
+      screenshotUrl: 'https://example.com/screenshot.png',
+      actionUrl: 'https://example.com/security',
+      actionText: '进入控制台分析异常'
+    });
+
+    expect(message.html).toContain('https://example.com/security');
+    expect(message.html).toContain('进入控制台分析异常');
   });
 
   it('提供常用邮箱 SMTP 预设', () => {

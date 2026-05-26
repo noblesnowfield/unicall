@@ -27,7 +27,6 @@ export function createGameNotificationEmail(
   const recipientName = options.recipientName ?? '用户';
   const recipientSuffix = options.recipientSuffix ?? '先生/女士';
   const appName = options.appName ?? '应用';
-  const actionUrl = options.actionUrl ?? 'https://example.com/events';
   const screenshotCid = 'event-screenshot';
   const screenshotSource = options.screenshotUrl ?? `cid:${screenshotCid}`;
   const attachments = createScreenshotAttachments(options, screenshotCid);
@@ -40,7 +39,6 @@ export function createGameNotificationEmail(
       recipientName,
       recipientSuffix,
       appName,
-      actionUrl,
       screenshotSource
     }),
     ...(attachments.length > 0 ? { attachments } : {})
@@ -51,7 +49,6 @@ interface ResolvedGameNotificationEmailOptions
   extends Required<
     Pick<
       GameNotificationEmailOptions,
-      | 'actionUrl'
       | 'appName'
       | 'eventDescription'
       | 'eventName'
@@ -61,6 +58,7 @@ interface ResolvedGameNotificationEmailOptions
       | 'teamName'
     >
   > {
+  readonly actionUrl?: string;
   readonly actionText?: string;
   readonly footerText?: string;
   readonly screenshotSource: string;
@@ -107,13 +105,7 @@ function createGameNotificationHtml(
                   </td>
                 </tr>
               </table>
-              <table role="presentation" cellpadding="0" cellspacing="0" align="center">
-                <tr>
-                  <td style="border-radius:6px;background:#2563eb;">
-                    <a href="${escapeAttribute(options.actionUrl)}" target="_blank" style="display:inline-block;padding:12px 26px;color:#fff;font-size:15px;font-weight:700;text-decoration:none;border-radius:6px;">${escapeHtml(options.actionText ?? '查看事件详情')}</a>
-                  </td>
-                </tr>
-              </table>
+              ${createActionButton(options)}
               <p style="margin:26px 0 0;font-size:13px;line-height:1.7;color:#64748b;text-align:center;">${escapeHtml(options.footerText ?? '本邮件由系统自动发送，请勿直接回复。')}</p>
             </td>
           </tr>
@@ -126,6 +118,20 @@ function createGameNotificationHtml(
   </table>
 </body>
 </html>`;
+}
+
+function createActionButton(options: ResolvedGameNotificationEmailOptions): string {
+  if (!options.actionUrl) {
+    return '';
+  }
+
+  return `<table role="presentation" cellpadding="0" cellspacing="0" align="center">
+    <tr>
+      <td style="border-radius:6px;background:#2563eb;">
+        <a href="${escapeAttribute(options.actionUrl)}" target="_blank" style="display:inline-block;padding:12px 26px;color:#fff;font-size:15px;font-weight:700;text-decoration:none;border-radius:6px;">${escapeHtml(options.actionText ?? '查看事件详情')}</a>
+      </td>
+    </tr>
+  </table>`;
 }
 
 function createInfoRow(label: string, value: string): string {

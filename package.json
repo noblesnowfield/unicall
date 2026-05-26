@@ -24,6 +24,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup",
+    "push:ui": "node scripts/ui/test-push-server.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
