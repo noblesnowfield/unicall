@@ -1,4 +1,5 @@
 export { NotificationRuntime, notify } from '../src/runtime';
+export type { AddTargetOptions, SendOptions } from '../src/runtime';
 export {
   composeMiddleware,
   loggingMiddleware,

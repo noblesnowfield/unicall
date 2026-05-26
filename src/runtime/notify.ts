@@ -19,6 +19,7 @@ export async function notify(
 
   return runtime.send(message, {
     ...(options.signal ? { signal: options.signal } : {}),
-    ...(options.middleware ? { middleware: options.middleware } : {})
+    ...(options.middleware ? { middleware: options.middleware } : {}),
+    ...(options.tags ? { tags: options.tags } : {})
   });
 }

@@ -73,4 +73,5 @@ export interface NotificationRuntimeOptions {
 export interface NotifyOptions extends NotificationRuntimeOptions {
   readonly signal?: AbortSignal;
   readonly middleware?: readonly NotificationMiddleware[];
+  readonly tags?: readonly string[];
 }

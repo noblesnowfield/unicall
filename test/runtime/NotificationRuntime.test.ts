@@ -186,4 +186,74 @@ describe('NotificationRuntime', () => {
     expect(result?.success).toBe(true);
     expect(attempts).toBe(2);
   });
+
+  it('支持按发送 tags 选择目标 Provider', async () => {
+    const sentProtocols: string[] = [];
+    const registry = new ProviderRegistry([
+      createMockFactory('alpha', {
+        send() {
+          sentProtocols.push('alpha');
+
+          return {
+            provider: 'alpha-provider',
+            protocol: 'alpha',
+            success: true
+          };
+        }
+      }),
+      createMockFactory('beta', {
+        send() {
+          sentProtocols.push('beta');
+
+          return {
+            provider: 'beta-provider',
+            protocol: 'beta',
+            success: true
+          };
+        }
+      })
+    ]);
+    const runtime = new NotificationRuntime({ registry });
+
+    runtime.add('alpha://token', { tags: ['ops'] });
+    runtime.add('beta://token', { tags: ['dev'] });
+
+    const results = await runtime.send(
+      {
+        text: 'hello'
+      },
+      {
+        tags: ['ops']
+      }
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.protocol).toBe('alpha');
+    expect(sentProtocols).toEqual(['alpha']);
+  });
+
+  it('支持从配置目标批量注册并使用消息 tags 过滤', async () => {
+    const registry = new ProviderRegistry([
+      createMockFactory('alpha'),
+      createMockFactory('beta')
+    ]);
+    const runtime = new NotificationRuntime({ registry }).addTargets([
+      {
+        url: 'alpha://token',
+        tags: ['ops']
+      },
+      {
+        url: 'beta://token',
+        tags: ['dev']
+      }
+    ]);
+
+    const results = await runtime.send({
+      text: 'hello',
+      tags: ['dev']
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.protocol).toBe('beta');
+  });
 });

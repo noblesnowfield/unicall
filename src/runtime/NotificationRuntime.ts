@@ -7,6 +7,7 @@ import { composeMiddleware } from '../middleware';
 import { parseNotificationUrl } from '../parser';
 import { ProviderRegistry } from '../provider';
 import type { MiddlewareContext, NotificationMiddleware } from '../middleware';
+import type { NotificationTargetConfig } from '../config/types';
 import type {
   NotificationMessage,
   NotificationProvider,
@@ -18,11 +19,19 @@ import type { NotificationUrl } from '../parser';
 interface RuntimeTarget {
   readonly url: NotificationUrl;
   readonly provider: NotificationProvider;
+  readonly tags: readonly string[];
+  readonly group?: string;
+}
+
+export interface AddTargetOptions {
+  readonly tags?: readonly string[];
+  readonly group?: string;
 }
 
 export interface SendOptions {
   readonly signal?: AbortSignal;
   readonly middleware?: readonly NotificationMiddleware[];
+  readonly tags?: readonly string[];
 }
 
 export class NotificationRuntime {
@@ -35,7 +44,10 @@ export class NotificationRuntime {
     this.middleware = [...(options.middleware ?? [])];
   }
 
-  public add(url: string | readonly string[]): this {
+  public add(
+    url: string | readonly string[],
+    options: AddTargetOptions = {}
+  ): this {
     const urls = Array.isArray(url) ? url : [url];
 
     for (const item of urls) {
@@ -43,8 +55,25 @@ export class NotificationRuntime {
       const provider = this.registry.create(parsedUrl);
       this.targets.push({
         url: parsedUrl,
-        provider
+        provider,
+        tags: options.tags ?? [],
+        ...(options.group ? { group: options.group } : {})
       });
+    }
+
+    return this;
+  }
+
+  public addTarget(target: NotificationTargetConfig): this {
+    return this.add(target.url, {
+      ...(target.tags ? { tags: target.tags } : {}),
+      ...(target.group ? { group: target.group } : {})
+    });
+  }
+
+  public addTargets(targets: readonly NotificationTargetConfig[]): this {
+    for (const target of targets) {
+      this.addTarget(target);
     }
 
     return this;
@@ -68,7 +97,11 @@ export class NotificationRuntime {
 
     const middleware = [...this.middleware, ...(options.middleware ?? [])];
     const pipeline = composeMiddleware(middleware);
-    const tasks = this.targets.map((target) =>
+    const selectedTargets = selectTargets(
+      this.targets,
+      options.tags ?? message.tags
+    );
+    const tasks = selectedTargets.map((target) =>
       sendToTarget(target, message, options, pipeline)
     );
     const settledResults = await Promise.allSettled(tasks);
@@ -78,7 +111,7 @@ export class NotificationRuntime {
         return result.value;
       }
 
-      const target = this.targets[index];
+      const target = selectedTargets[index];
 
       if (!target) {
         throw result.reason;
@@ -95,6 +128,21 @@ export class NotificationRuntime {
       };
     });
   }
+}
+
+function selectTargets(
+  targets: readonly RuntimeTarget[],
+  tags?: readonly string[]
+): readonly RuntimeTarget[] {
+  if (!tags || tags.length === 0) {
+    return targets;
+  }
+
+  const requiredTags = new Set(tags);
+
+  return targets.filter((target) =>
+    target.tags.some((tag) => requiredTags.has(tag))
+  );
 }
 
 function assertMessageHasContent(message: NotificationMessage): void {
