@@ -4,6 +4,7 @@ export {
   AuthenticationError,
   DuplicateProviderError,
   InvalidMessageError,
+  InvalidProviderConfigError,
   InvalidUrlError,
   ProviderNotFoundError,
   ProviderSendError,

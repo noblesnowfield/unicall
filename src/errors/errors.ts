@@ -35,6 +35,16 @@ export class InvalidMessageError extends NotificationError {
   }
 }
 
+export class InvalidProviderConfigError extends NotificationError {
+  public constructor(provider: string, protocol: string, message: string) {
+    super(`Invalid provider config for ${provider}: ${message}`, {
+      code: 'INVALID_PROVIDER_CONFIG',
+      provider,
+      protocol
+    });
+  }
+}
+
 export class ProviderSendError extends NotificationError {
   public constructor(
     provider: string,

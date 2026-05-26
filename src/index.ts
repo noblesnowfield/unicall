@@ -6,12 +6,22 @@ export {
   timeoutMiddleware
 } from './middleware';
 export { ProviderRegistry } from './provider';
-export { WebhookProvider, webhookProviderFactory } from './providers';
+export {
+  MiaotixingProvider,
+  miaotixingProviderFactory,
+  PushplusProvider,
+  pushplusProviderFactory,
+  WebhookProvider,
+  webhookProviderFactory,
+  WxPusherProvider,
+  wxPusherProviderFactory
+} from './providers';
 export { normalizeProtocol, parseNotificationUrl } from './parser';
 export {
   AuthenticationError,
   DuplicateProviderError,
   InvalidMessageError,
+  InvalidProviderConfigError,
   InvalidUrlError,
   NotificationError,
   ProviderNotFoundError,
