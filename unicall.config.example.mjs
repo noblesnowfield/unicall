@@ -57,7 +57,32 @@ export default {
         user: process.env.UNICALL_EMAIL_DEFAULT_USER,
         pass: process.env.UNICALL_EMAIL_DEFAULT_PASS,
         from: process.env.UNICALL_EMAIL_DEFAULT_FROM,
+        fromName: process.env.UNICALL_EMAIL_DEFAULT_FROM_NAME,
         to: splitList(process.env.UNICALL_EMAIL_DEFAULT_TO)
+      },
+      qq: {
+        service: 'qq',
+        user: process.env.UNICALL_EMAIL_QQ_USER,
+        pass: process.env.UNICALL_EMAIL_QQ_PASS,
+        from: process.env.UNICALL_EMAIL_QQ_FROM,
+        fromName: process.env.UNICALL_EMAIL_QQ_FROM_NAME ?? '云端效率大师',
+        to: splitList(process.env.UNICALL_EMAIL_QQ_TO)
+      },
+      '163': {
+        service: '163',
+        user: process.env.UNICALL_EMAIL_163_USER,
+        pass: process.env.UNICALL_EMAIL_163_PASS,
+        from: process.env.UNICALL_EMAIL_163_FROM,
+        fromName: process.env.UNICALL_EMAIL_163_FROM_NAME,
+        to: splitList(process.env.UNICALL_EMAIL_163_TO)
+      },
+      gmail: {
+        service: 'gmail',
+        user: process.env.UNICALL_EMAIL_GMAIL_USER,
+        pass: process.env.UNICALL_EMAIL_GMAIL_PASS,
+        from: process.env.UNICALL_EMAIL_GMAIL_FROM,
+        fromName: process.env.UNICALL_EMAIL_GMAIL_FROM_NAME,
+        to: splitList(process.env.UNICALL_EMAIL_GMAIL_TO)
       }
     }
   },
@@ -79,6 +104,14 @@ export default {
             contentId: 'unicall-demo'
           }
         ]
+      },
+      gameNotification: {
+        appName: '云端效率大师',
+        teamName: '运维管理团队',
+        recipientName: '张华',
+        eventName: '游戏服务状态通知',
+        eventTitle: '副本匹配队列恢复正常',
+        eventDescription: '匹配服务短暂抖动后已自动恢复。'
       }
     },
     pushplus: {

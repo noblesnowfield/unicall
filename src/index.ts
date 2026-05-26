@@ -9,19 +9,25 @@ export { ProviderRegistry } from './provider';
 export {
   createDefaultProviderRegistry,
   createEmailMimeMessage,
+  createGameNotificationEmail,
   EmailProvider,
+  formatEmailAddress,
   mailtoProviderFactory,
   MiaotixingProvider,
   miaotixingProviderFactory,
   PushplusProvider,
   pushplusProviderFactory,
+  resolveSmtpPreset,
   smtpProviderFactory,
+  smtpPresets,
   WebhookProvider,
   webhookProviderFactory,
   WxPusherProvider,
   wxPusherProviderFactory
 } from './providers';
 export type { SmtpConnectionOptions, SmtpTransport } from './providers';
+export type { SmtpPreset, SmtpPresetName } from './providers';
+export type { GameNotificationEmailOptions } from './providers';
 export { normalizeProtocol, parseNotificationUrl } from './parser';
 export {
   AuthenticationError,

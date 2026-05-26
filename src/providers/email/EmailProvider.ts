@@ -4,7 +4,8 @@ import {
   ProviderSendError
 } from '../../errors';
 import { readStringList } from '../shared/query';
-import { createEmailMimeMessage } from './mime';
+import { createEmailMimeMessage, formatEmailAddress } from './mime';
+import { resolveSmtpPreset } from './smtpPresets';
 import { SmtpClient, type SmtpConnectionOptions, type SmtpTransport } from './SmtpClient';
 import type {
   NotificationMessage,
@@ -49,6 +50,7 @@ export class EmailProvider implements NotificationProvider {
       const mimeMessage = await createEmailMimeMessage(
         {
           from: this.options.from,
+          ...(this.options.fromName ? { fromName: this.options.fromName } : {}),
           to: this.options.to,
           subject: message.title ?? 'Unicall 通知'
         },
@@ -86,11 +88,13 @@ export const mailtoProviderFactory: ProviderFactory = {
 };
 
 function parseEmailOptions(url: NotificationUrl): EmailProviderOptions {
-  const secure = parseBoolean(url.query.get('secure'), true);
-  const host = url.hostname;
-  const port = Number(url.port || (secure ? 465 : 587));
+  const preset = resolveSmtpPreset(url.query.get('service') ?? url.query.get('provider') ?? undefined);
+  const secure = parseBoolean(url.query.get('secure'), preset?.secure ?? true);
+  const host = preset?.host ?? url.hostname;
+  const port = Number(url.port || preset?.port || (secure ? 465 : 587));
   const to = readStringList(url.query.get('to') ?? undefined);
   const from = url.query.get('from') ?? url.username;
+  const fromName = url.query.get('fromName') ?? undefined;
 
   if (!host) {
     throw new InvalidProviderConfigError('email', url.protocol, 'missing host');
@@ -116,6 +120,7 @@ function parseEmailOptions(url: NotificationUrl): EmailProviderOptions {
     ...(url.username ? { user: url.username } : {}),
     ...(url.password ? { pass: url.password } : {}),
     from,
+    ...(fromName ? { fromName } : {}),
     to
   };
 }

@@ -1,5 +1,5 @@
 import { createDefaultProviderRegistry, notify } from '../../src';
-import { emailHtmlTemplate } from '../../examples/templates/email-html';
+import { emailGameNotificationTemplate } from '../../examples/templates/email-game-notification';
 import {
   getChannelProfile,
   loadUnicallConfig,
@@ -10,40 +10,51 @@ import {
 } from '../config/loadUnicallConfig';
 
 interface EmailProfile {
+  readonly service?: string;
   readonly host?: string;
   readonly port?: number;
   readonly secure?: boolean;
   readonly user?: string;
   readonly pass?: string;
   readonly from?: string;
+  readonly fromName?: string;
   readonly to?: readonly string[];
 }
 
 const args = parseScriptArgs(process.argv.slice(2));
 const config = await loadUnicallConfig(args.configPath);
 const profile = getChannelProfile<EmailProfile>(config, 'email', args.profile);
-const host = requireString(profile.host, 'email.host');
+const host = requireString(profile.host ?? profile.service, 'email.host or email.service');
 const user = requireString(profile.user, 'email.user');
 const pass = requireString(profile.pass, 'email.pass');
 const from = requireString(profile.from, 'email.from');
 const to = requireStringList(profile.to, 'email.to');
+const authority = `${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${host}${
+  profile.port ? `:${profile.port}` : ''
+}`;
 const params = new URLSearchParams({
   from,
   to: to.join(','),
   secure: String(profile.secure ?? true)
 });
 
+if (profile.service) {
+  params.set('service', profile.service);
+}
+
+if (profile.fromName) {
+  params.set('fromName', profile.fromName);
+}
+
 const [result] = await notify(
-  `smtp://${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${host}:${
-    profile.port ?? 465
-  }?${params}`,
-  emailHtmlTemplate,
+  `smtp://${authority}?${params}`,
+  emailGameNotificationTemplate,
   {
     registry: createDefaultProviderRegistry()
   }
 );
 
 console.log('Email profile:', args.profile ?? config.defaultProfile ?? 'default');
-console.log('SMTP host:', host);
+console.log('SMTP host/service:', host);
 console.log('SMTP user:', maskSecret(user));
 console.log('Send success:', result?.success === true);

@@ -5,7 +5,9 @@ import {
   mailtoProviderFactory,
   NotificationRuntime,
   ProviderRegistry,
-  createEmailMimeMessage
+  createEmailMimeMessage,
+  createGameNotificationEmail,
+  resolveSmtpPreset
 } from '../../src';
 import type { SmtpConnectionOptions, SmtpTransport } from '../../src';
 
@@ -67,6 +69,7 @@ describe('EmailProvider', () => {
     const mimeMessage = await createEmailMimeMessage(
       {
         from: 'robot@example.com',
+        fromName: '云端效率大师',
         to: ['admin@example.com'],
         subject: '部署完成'
       },
@@ -76,7 +79,42 @@ describe('EmailProvider', () => {
     );
 
     expect(mimeMessage).toContain('Subject: =?UTF-8?B?');
+    expect(mimeMessage).toContain('From: =?UTF-8?B?');
     expect(mimeMessage).toContain('Content-Type: text/plain; charset=UTF-8');
+  });
+
+  it('支持 base64 图片附件和游戏通知模板默认值', async () => {
+    const message = createGameNotificationEmail({
+      eventName: '事件名称',
+      eventTitle: '事件标题',
+      eventDescription: '提示内容',
+      screenshotBase64: 'AQID'
+    });
+    const mimeMessage = await createEmailMimeMessage(
+      {
+        from: 'robot@example.com',
+        to: ['admin@example.com'],
+        subject: message.title ?? '通知'
+      },
+      message
+    );
+
+    expect(message.html).toContain('运维管理团队 / 用户 先生/女士');
+    expect(message.html).toContain('应用');
+    expect(mimeMessage).toContain('Content-ID: <event-screenshot>');
+    expect(mimeMessage).toContain('AQID');
+    expect(mimeMessage).not.toContain('QVFJRA==');
+  });
+
+  it('提供常用邮箱 SMTP 预设', () => {
+    expect(resolveSmtpPreset('qq')).toEqual({
+      host: 'smtp.qq.com',
+      port: 465,
+      secure: true,
+      startTls: false
+    });
+    expect(resolveSmtpPreset('gmail')?.host).toBe('smtp.gmail.com');
+    expect(resolveSmtpPreset('163')?.host).toBe('smtp.163.com');
   });
 
   it('缺少收件人时拒绝创建 mailto Provider', () => {

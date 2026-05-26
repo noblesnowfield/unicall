@@ -3,6 +3,7 @@ import type { NotificationAttachment, NotificationMessage } from '../../types/pu
 
 export interface EmailEnvelope {
   readonly from: string;
+  readonly fromName?: string;
   readonly to: readonly string[];
   readonly subject: string;
 }
@@ -12,7 +13,7 @@ export async function createEmailMimeMessage(
   message: NotificationMessage
 ): Promise<string> {
   const headers = [
-    ['From', envelope.from],
+    ['From', formatEmailAddress(envelope.from, envelope.fromName)],
     ['To', envelope.to.join(', ')],
     ['Subject', encodeHeader(envelope.subject)],
     ['Date', new Date().toUTCString()],
@@ -99,6 +100,10 @@ async function readAttachmentData(
 ): Promise<Buffer | string> {
   if (attachment.data !== undefined) {
     if (typeof attachment.data === 'string') {
+      if (attachment.encoding === 'base64') {
+        return Buffer.from(attachment.data, 'base64');
+      }
+
       return attachment.data;
     }
 
@@ -132,6 +137,14 @@ function encodeHeader(value: string): string {
   }
 
   return `=?UTF-8?B?${Buffer.from(value, 'utf8').toString('base64')}?=`;
+}
+
+export function formatEmailAddress(address: string, name?: string): string {
+  if (!name) {
+    return address;
+  }
+
+  return `${encodeHeader(name)} <${address}>`;
 }
 
 function encodeBase64(value: Buffer | string): string {

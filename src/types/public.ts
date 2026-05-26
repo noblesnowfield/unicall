@@ -9,6 +9,7 @@ export interface NotificationAttachment {
   readonly contentType?: string;
   readonly url?: string;
   readonly data?: string | ArrayBuffer | Uint8Array;
+  readonly encoding?: 'base64' | 'utf8';
   readonly contentId?: string;
 }
 

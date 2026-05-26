@@ -10,6 +10,7 @@ export interface SmtpConnectionOptions {
   readonly user?: string;
   readonly pass?: string;
   readonly from: string;
+  readonly fromName?: string;
   readonly to: readonly string[];
 }
 
@@ -44,10 +45,10 @@ export class SmtpClient implements SmtpTransport {
         await session.command(`AUTH PLAIN ${token}`, 235);
       }
 
-      await session.command(`MAIL FROM:<${options.from}>`, 250);
+      await session.command(`MAIL FROM:<${extractEmailAddress(options.from)}>`, 250);
 
       for (const recipient of options.to) {
-        await session.command(`RCPT TO:<${recipient}>`, [250, 251]);
+        await session.command(`RCPT TO:<${extractEmailAddress(recipient)}>`, [250, 251]);
       }
 
       await session.command('DATA', 354);
@@ -176,4 +177,10 @@ class SmtpSession {
 
 function dotStuff(message: string): string {
   return message.replace(/^\./gm, '..');
+}
+
+function extractEmailAddress(value: string): string {
+  const matched = /<([^>]+)>/.exec(value);
+
+  return matched?.[1] ?? value;
 }
