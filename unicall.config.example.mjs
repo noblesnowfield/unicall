@@ -46,8 +46,12 @@ export default {
         appToken: process.env.UNICALL_WXPUSHER_DEFAULT_APP_TOKEN,
         uids: splitList(process.env.UNICALL_WXPUSHER_DEFAULT_UIDS),
         topicIds: splitNumberList(process.env.UNICALL_WXPUSHER_DEFAULT_TOPIC_IDS),
-        qrCodeUrl: process.env.UNICALL_WXPUSHER_DEFAULT_QR_CODE_URL,
+        appQrCodeUrl: process.env.UNICALL_WXPUSHER_DEFAULT_APP_QR_CODE_URL,
+        qrCodeUrl:
+          process.env.UNICALL_WXPUSHER_DEFAULT_QR_CODE_URL ??
+          process.env.UNICALL_WXPUSHER_DEFAULT_APP_QR_CODE_URL,
         subscribeUrl: process.env.UNICALL_WXPUSHER_DEFAULT_SUBSCRIBE_URL,
+        callbackUrl: process.env.UNICALL_WXPUSHER_DEFAULT_CALLBACK_URL,
         qrExtra: process.env.UNICALL_WXPUSHER_DEFAULT_QR_EXTRA ?? 'unicall-local-test',
         qrValidTime: optionalNumber(process.env.UNICALL_WXPUSHER_DEFAULT_QR_VALID_TIME) ?? 1800,
         template: 'html'

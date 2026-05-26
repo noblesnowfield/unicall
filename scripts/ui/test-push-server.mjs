@@ -7,6 +7,7 @@ const port = Number(process.env.UNICALL_PUSH_UI_PORT ?? 4317);
 const configPath = process.env.UNICALL_CONFIG ?? 'unicall.config.local.mjs';
 const distPath = new URL('../../dist/index.js', import.meta.url);
 const assetsRoot = new URL('../../assets/', import.meta.url);
+const wxpusherCallbacks = [];
 
 let unicall;
 
@@ -55,6 +56,23 @@ const server = createServer(async (request, response) => {
       const payload = await readJsonBody(request);
       const result = await queryWxPusherQrCodeUid(payload);
       sendJson(response, result);
+      return;
+    }
+
+    if (request.method === 'POST' && requestUrl.pathname === '/api/wxpusher/callback') {
+      const payload = await readJsonBody(request);
+      const event = unicall.parseWxPusherCallback(payload);
+      wxpusherCallbacks.unshift({
+        receivedAt: new Date().toISOString(),
+        event
+      });
+      wxpusherCallbacks.splice(20);
+      sendJson(response, { success: true, event });
+      return;
+    }
+
+    if (request.method === 'GET' && requestUrl.pathname === '/api/wxpusher/callbacks') {
+      sendJson(response, { callbacks: wxpusherCallbacks });
       return;
     }
 
@@ -555,6 +573,7 @@ function renderPage() {
     let active = 'email';
     let selectedProfiles = {};
     let wxpusherQrState = {};
+    let wxpusherCallbackTimer = 0;
     const emailHtmlTemplates = {
       gameNotification: '游戏通知模板',
       rawHtml: '自定义 HTML'
@@ -564,7 +583,7 @@ function renderPage() {
       email: ['service','host','port','secure','user','pass','from','fromName','to'],
       pushplus: ['token','topic','template'],
       miaotixing: ['id','app','type','option'],
-      wxpusher: ['appToken','uids','topicIds','qrCodeUrl','subscribeUrl','qrExtra','qrValidTime'],
+      wxpusher: ['appToken','uids','topicIds','appQrCodeUrl','qrCodeUrl','subscribeUrl','callbackUrl','qrExtra','qrValidTime'],
       webhook: ['url']
     };
     const messages = {
@@ -610,6 +629,7 @@ function renderPage() {
       const templateValues = getTemplateDefaults(active, profile);
       renderMessageForm(templateValues);
       renderWxPusherQrPanel(values);
+      setupWxPusherCallbackPolling();
     }
     function renderProfileSelect(profiles, profile){
       return '<div class="field full"><label>profile</label><select id="profileSelect">'+profiles.map(item => '<option value="'+item+'" '+(item===profile?'selected':'')+'>'+item+'</option>').join('')+'</select><span class="hint">来自 unicall.config.local.mjs；不存在时回退到 unicall.config.example.mjs</span></div>';
@@ -621,12 +641,14 @@ function renderPage() {
         return '<div class="field"><label>service</label><select data-kind="value" data-field="service">'+options+'</select><span class="hint">选择后自动填写 host、port、secure；custom 表示手动填写 SMTP。</span></div>';
       }
       const display = normalizeValue(value);
-      return '<div class="field '+(field==='to'||field==='url'||field==='qrCodeUrl'||field==='subscribeUrl'?'full':'')+'"><label>'+field+'</label><input data-kind="value" data-field="'+field+'" type="text" placeholder="'+display.placeholder+'" value="'+display.value+'">'+renderConfigHint(field)+'</div>';
+      return '<div class="field '+(field==='to'||field==='url'||field==='appQrCodeUrl'||field==='qrCodeUrl'||field==='subscribeUrl'||field==='callbackUrl'?'full':'')+'"><label>'+field+'</label><input data-kind="value" data-field="'+field+'" type="text" placeholder="'+display.placeholder+'" value="'+display.value+'">'+renderConfigHint(field)+'</div>';
     }
     function renderConfigHint(field){
       const hints = {
+        appQrCodeUrl: '选填：应用二维码图片地址；用户扫码关注应用后，WxPusher 会向后台回调 UID。',
         qrCodeUrl: '选填：已有应用二维码或主题二维码图片地址，填写后这里直接展示。',
         subscribeUrl: '选填：已有应用或主题订阅链接。',
+        callbackUrl: '选填：WxPusher 后台配置的回调地址。外网必须能访问，本地 localhost 不能被 WxPusher 直接回调。',
         qrExtra: '创建临时参数二维码时携带的来源标识，最长 64 位。',
         qrValidTime: '创建临时参数二维码的有效期，单位秒。'
       };
@@ -691,7 +713,7 @@ function renderPage() {
     }
     function bindWxPusherQrInputs(){
       if(active !== 'wxpusher') return;
-      ['qrCodeUrl','subscribeUrl'].forEach(field => {
+      ['appQrCodeUrl','qrCodeUrl','subscribeUrl','callbackUrl'].forEach(field => {
         const input = document.querySelector('[data-kind="value"][data-field="'+field+'"]');
         if(input) input.oninput = () => renderWxPusherQrPanel({...collect('value'), ...wxpusherQrState});
       });
@@ -703,13 +725,16 @@ function renderPage() {
         return;
       }
       card.hidden = false;
-      const qrCodeUrl = wxpusherQrState.qrCodeUrl || values.qrCodeUrl || '';
+      const qrCodeUrl = wxpusherQrState.qrCodeUrl || values.appQrCodeUrl || values.qrCodeUrl || '';
       const subscribeUrl = wxpusherQrState.url || values.subscribeUrl || '';
+      const configuredCallbackUrl = values.callbackUrl || '';
+      const localCallbackUrl = location.origin + '/api/wxpusher/callback';
       const code = wxpusherQrState.code || '';
       const image = qrCodeUrl ? '<img src="'+qrCodeUrl+'" alt="WxPusher 二维码">' : '<div class="qr-placeholder">填写二维码图片地址<br>或生成临时二维码</div>';
-      document.getElementById('wxpusherQrPanel').innerHTML = '<div class="qrbox">'+image+'<div><div class="hint">用于让用户扫码关注应用或主题。生成参数二维码后，可以查询最近一次扫码得到的 UID，并自动填入 uids。</div><div class="actions"><button class="btn secondary" id="createWxPusherQr">生成临时二维码</button><button class="btn secondary" id="queryWxPusherUid">查询扫码 UID</button></div><div class="hint">二维码 code：'+(code || '暂无')+'</div>'+(subscribeUrl ? '<div class="hint">订阅链接：<a href="'+subscribeUrl+'" target="_blank" rel="noreferrer">'+subscribeUrl+'</a></div>' : '')+'<div class="status" id="wxpusherQrStatus">等待操作...</div></div></div>';
+      document.getElementById('wxpusherQrPanel').innerHTML = '<div class="qrbox">'+image+'<div><div class="hint">用于让用户扫码关注应用或主题。应用二维码扫码后，WxPusher 会把 UID 回调到后台；参数二维码也可以通过 code 查询 UID。</div><div class="actions"><button class="btn secondary" id="createWxPusherQr">生成临时二维码</button><button class="btn secondary" id="queryWxPusherUid">查询扫码 UID</button><button class="btn secondary" id="refreshWxPusherCallbacks">刷新回调</button></div><div class="hint">本地回调接收地址：'+localCallbackUrl+'</div>'+(configuredCallbackUrl ? '<div class="hint">当前配置回调地址：'+configuredCallbackUrl+'</div>' : '')+'<div class="hint">二维码 code：'+(code || '暂无')+'</div>'+(subscribeUrl ? '<div class="hint">订阅链接：<a href="'+subscribeUrl+'" target="_blank" rel="noreferrer">'+subscribeUrl+'</a></div>' : '')+'<div class="status" id="wxpusherQrStatus">等待操作...</div><div class="status" id="wxpusherCallbackStatus">等待回调...</div></div></div>';
       document.getElementById('createWxPusherQr').onclick = createWxPusherQr;
       document.getElementById('queryWxPusherUid').onclick = queryWxPusherUid;
+      document.getElementById('refreshWxPusherCallbacks').onclick = loadWxPusherCallbacks;
     }
     async function createWxPusherQr(){
       document.getElementById('wxpusherQrStatus').textContent = '生成中...';
@@ -740,6 +765,35 @@ function renderPage() {
         if(input) input.value = body.uid;
       }
       document.getElementById('wxpusherQrStatus').textContent = JSON.stringify(body, null, 2);
+    }
+    function setupWxPusherCallbackPolling(){
+      if(wxpusherCallbackTimer){
+        clearInterval(wxpusherCallbackTimer);
+        wxpusherCallbackTimer = 0;
+      }
+      if(active !== 'wxpusher') return;
+      loadWxPusherCallbacks();
+      wxpusherCallbackTimer = setInterval(loadWxPusherCallbacks, 3000);
+    }
+    async function loadWxPusherCallbacks(){
+      if(active !== 'wxpusher') return;
+      const target = document.getElementById('wxpusherCallbackStatus');
+      if(!target) return;
+      const body = await fetch('/api/wxpusher/callbacks').then(res => res.json());
+      const callbacks = Array.isArray(body.callbacks) ? body.callbacks : [];
+      if(callbacks.length === 0){
+        target.textContent = '暂无回调。请把 WxPusher 后台回调地址配置为可被外网访问的 /api/wxpusher/callback。';
+        return;
+      }
+      const latest = callbacks[0];
+      if(latest?.event?.uid){
+        const input = document.querySelector('[data-kind="value"][data-field="uids"]');
+        if(input) input.value = latest.event.uid;
+      }
+      target.innerHTML = callbacks.map(item => escapeHtml(JSON.stringify(item, null, 2))).join('\\n\\n');
+    }
+    function escapeHtml(value){
+      return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     }
     function normalizeValue(value){
       if(Array.isArray(value)) return { value:value.join(','), placeholder:'' };
