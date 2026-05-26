@@ -302,7 +302,7 @@ function sanitizeConfig(config) {
     channels[channel] = {};
 
     for (const [profile, values] of Object.entries(profiles ?? {})) {
-      channels[channel][profile] = sanitizeObject(values);
+      channels[channel][profile] = values;
     }
   }
 
@@ -335,28 +335,6 @@ function getTemplateValues(config, channel, profileName) {
   }
 
   return selected;
-}
-
-function sanitizeObject(values) {
-  const output = {};
-
-  for (const [key, value] of Object.entries(values ?? {})) {
-    if (isSecretKey(key)) {
-      output[key] = {
-        configured: typeof value === 'string' && value.length > 0,
-        masked: typeof value === 'string' && value.length > 0 ? maskSecret(value) : ''
-      };
-      continue;
-    }
-
-    output[key] = value;
-  }
-
-  return output;
-}
-
-function isSecretKey(key) {
-  return /token|pass|secret|appToken|id$/i.test(key);
 }
 
 function normalizeSendResult(result) {
@@ -420,10 +398,6 @@ function removeEmpty(values) {
   return output;
 }
 
-function maskSecret(value) {
-  return value.length <= 6 ? '***' : `${value.slice(0, 3)}***${value.slice(-3)}`;
-}
-
 function sendHtml(response, html) {
   response.writeHead(200, {
     'content-type': 'text/html; charset=utf-8'
@@ -483,7 +457,7 @@ function renderPage() {
       </div>
       <button class="btn secondary" id="reload">重新读取配置</button>
     </div>
-    <div class="note">秘钥不会明文显示在页面里；输入框留空时，服务端会使用本地配置文件和 .env.local 中的值。</div>
+    <div class="note">本地测试页面会明文显示秘钥，方便核对和临时覆盖；请只在本机受信任环境使用。</div>
     <div class="tabs" id="tabs"></div>
     <section class="panel">
       <div class="card">
@@ -510,7 +484,6 @@ function renderPage() {
   </main>
   <script>
     const channels = ['email','pushplus','miaotixing','wxpusher','webhook'];
-    const secretFields = new Set(['token','pass','appToken','id']);
     const smtpPresets = {
       qq: {host:'smtp.qq.com', sslPort:465, startTlsPort:587, defaultSecure:true},
       foxmail: {host:'smtp.qq.com', sslPort:465, startTlsPort:587, defaultSecure:true},
@@ -586,11 +559,8 @@ function renderPage() {
         const options = ['', ...Object.keys(smtpPresets)].map(item => '<option value="'+item+'" '+(item===current?'selected':'')+'>'+(item || 'custom')+'</option>').join('');
         return '<div class="field"><label>service</label><select data-kind="value" data-field="service">'+options+'</select><span class="hint">选择后自动填写 host、port、secure；custom 表示手动填写 SMTP。</span></div>';
       }
-      const secret = secretFields.has(field);
-      const display = normalizeValue(value, secret);
-      const type = secret ? 'password' : 'text';
-      const hint = secret && value?.configured ? '<span class="hint secret">本地已配置：'+value.masked+'；留空使用本地值</span>' : '';
-      return '<div class="field '+(field==='to'||field==='url'?'full':'')+'"><label>'+field+'</label><input data-kind="value" data-field="'+field+'" type="'+type+'" placeholder="'+display.placeholder+'" value="'+display.value+'">'+hint+'</div>';
+      const display = normalizeValue(value);
+      return '<div class="field '+(field==='to'||field==='url'?'full':'')+'"><label>'+field+'</label><input data-kind="value" data-field="'+field+'" type="text" placeholder="'+display.placeholder+'" value="'+display.value+'"></div>';
     }
     function getTemplateDefaults(channel, profile){
       const templates = config.templates?.[channel] || {};
@@ -649,8 +619,7 @@ function renderPage() {
       };
       return hints[field] ? '<span class="hint">'+hints[field]+'</span>' : '';
     }
-    function normalizeValue(value, secret){
-      if(secret) return { value:'', placeholder: value?.configured ? '留空使用本地配置值' : '未配置，请填写' };
+    function normalizeValue(value){
       if(Array.isArray(value)) return { value:value.join(','), placeholder:'' };
       if(typeof value === 'object' && value) return { value:'', placeholder:'' };
       return { value:value ?? '', placeholder:'' };
