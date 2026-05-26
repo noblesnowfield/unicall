@@ -83,6 +83,10 @@ export default {
           eventName: '游戏服务状态通知',
           eventTitle: '副本匹配队列恢复正常',
           eventDescription: '匹配服务短暂抖动后已自动恢复。',
+          // 事件截图二选一：
+          // screenshotUrl 用远程图片地址；screenshotBase64 用本地或上游传入的 base64 图片内容。
+          screenshotUrl: 'https://avatars.githubusercontent.com/u/6154722?s=48&v=4',
+          // screenshotBase64: process.env.UNICALL_EMAIL_DEFAULT_SCREENSHOT_BASE64,
           actionUrl: 'https://example.com/game/events',
           actionText: '查看运行详情'
         }
@@ -110,7 +114,8 @@ export default {
         recipientName: '张华',
         eventName: '游戏服务状态通知',
         eventTitle: '副本匹配队列恢复正常',
-        eventDescription: '匹配服务短暂抖动后已自动恢复。'
+        eventDescription: '匹配服务短暂抖动后已自动恢复。',
+        screenshotUrl: 'https://avatars.githubusercontent.com/u/6154722?s=48&v=4'
       }
     },
     pushplus: {

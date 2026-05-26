@@ -112,6 +112,9 @@ function createEmailMessage(template: EmailTemplateProfile) {
         : template;
     const actionUrl = readOptionalString(options.actionUrl);
     const actionText = readOptionalString(options.actionText);
+    const screenshotUrl = readOptionalString(options.screenshotUrl);
+    const screenshotBase64 =
+      readOptionalString(options.screenshotBase64) ?? demoImage.toString('base64');
 
     return createGameNotificationEmail({
       eventName: readOptionString(options.eventName, '事件名称'),
@@ -120,7 +123,7 @@ function createEmailMessage(template: EmailTemplateProfile) {
       teamName: readOptionString(options.teamName, '运维管理团队'),
       recipientName: readOptionString(options.recipientName, '用户'),
       appName: readOptionString(options.appName, '应用'),
-      screenshotBase64: demoImage.toString('base64'),
+      ...(screenshotUrl ? { screenshotUrl } : { screenshotBase64 }),
       ...(actionUrl ? { actionUrl } : {}),
       ...(actionText ? { actionText } : {})
     });

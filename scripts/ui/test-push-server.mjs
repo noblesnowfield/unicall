@@ -502,7 +502,7 @@ function renderPage() {
       webhook: ['url']
     };
     const messages = {
-      email: ['teamName','recipientName','recipientSuffix','appName','eventName','eventTitle','eventDescription','screenshotMode','screenshotUrl','actionUrl','actionText'],
+      email: ['teamName','recipientName','recipientSuffix','appName','eventName','eventTitle','eventDescription','screenshotMode','screenshotUrl','screenshotBase64','actionUrl','actionText'],
       pushplus: ['title','text'],
       miaotixing: ['title','text'],
       wxpusher: ['title','html'],
@@ -560,10 +560,13 @@ function renderPage() {
       const defaults = {
         teamName:'运维管理团队', recipientName:'张华', recipientSuffix:'先生/女士', appName:'云端效率大师',
         eventName:'事件名称', eventTitle:'事件标题', eventDescription:'提示内容', screenshotMode:'local',
-        screenshotUrl:'https://avatars.githubusercontent.com/u/6154722?s=48&v=4', actionUrl:'https://example.com/game/events', actionText:'进入控制台分析异常',
+        screenshotUrl:'https://avatars.githubusercontent.com/u/6154722?s=48&v=4', screenshotBase64:'', actionUrl:'https://example.com/game/events', actionText:'进入控制台分析异常',
         title:'Unicall 测试推送', text:'测试推送', html:'<h1>Unicall 测试推送</h1><p>这是一条测试消息。</p>'
       };
       const value = templateValues?.[field] || defaults[field] || '';
+      if(field === 'screenshotBase64'){
+        return '<div class="field full"><label>'+field+'</label><textarea data-kind="message" data-field="'+field+'" placeholder="选填：粘贴图片 base64，优先级高于本地 demo 图">'+value+'</textarea>'+renderMessageHint(field)+'</div>';
+      }
       if(field === 'eventDescription' || field === 'html'){
         return '<div class="field full"><label>'+field+'</label><textarea data-kind="message" data-field="'+field+'">'+value+'</textarea>'+renderMessageHint(field)+'</div>';
       }
@@ -576,6 +579,7 @@ function renderPage() {
       const hints = {
         actionUrl: '选填：填写后邮件模板显示按钮，留空则不显示按钮。',
         screenshotUrl: '选填：screenshotMode 选择远程图片 URL 时使用。',
+        screenshotBase64: '选填：填写后使用 base64 内联图片；留空则使用远程 URL 或本地 demo.png。',
         eventDescription: '模板内容：事件描述或提示内容。',
         recipientName: '选填：不填时模板默认显示“用户”。'
       };
