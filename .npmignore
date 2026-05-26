@@ -1,0 +1,26 @@
+# 本地依赖与构建缓存
+node_modules/
+.pnpm-store/
+.codex/
+coverage/
+
+# 本地真实配置与密钥
+.env
+.env.*
+!.env.example
+unicall.config.local.*
+unicall.secrets.local.*
+*.local.*
+
+# 开发文档、测试、脚本与 IDE 配置
+doc/
+test/
+scripts/
+examples/
+.idea/
+.vscode/
+AGENTS.md
+pnpm-lock.yaml
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
