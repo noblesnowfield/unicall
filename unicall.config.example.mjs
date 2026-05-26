@@ -51,38 +51,27 @@ export default {
 
     email: {
       default: {
+        service: process.env.UNICALL_EMAIL_DEFAULT_SERVICE || 'qq',
         host: process.env.UNICALL_EMAIL_DEFAULT_HOST,
-        port: numberOrDefault(process.env.UNICALL_EMAIL_DEFAULT_PORT, 465),
-        secure: booleanOrDefault(process.env.UNICALL_EMAIL_DEFAULT_SECURE, true),
+        port: optionalNumber(process.env.UNICALL_EMAIL_DEFAULT_PORT),
+        secure: optionalBoolean(process.env.UNICALL_EMAIL_DEFAULT_SECURE),
         user: process.env.UNICALL_EMAIL_DEFAULT_USER,
         pass: process.env.UNICALL_EMAIL_DEFAULT_PASS,
         from: process.env.UNICALL_EMAIL_DEFAULT_FROM,
-        fromName: process.env.UNICALL_EMAIL_DEFAULT_FROM_NAME,
-        to: splitList(process.env.UNICALL_EMAIL_DEFAULT_TO)
-      },
-      qq: {
-        service: 'qq',
-        user: process.env.UNICALL_EMAIL_QQ_USER,
-        pass: process.env.UNICALL_EMAIL_QQ_PASS,
-        from: process.env.UNICALL_EMAIL_QQ_FROM,
-        fromName: process.env.UNICALL_EMAIL_QQ_FROM_NAME ?? '云端效率大师',
-        to: splitList(process.env.UNICALL_EMAIL_QQ_TO)
-      },
-      '163': {
-        service: '163',
-        user: process.env.UNICALL_EMAIL_163_USER,
-        pass: process.env.UNICALL_EMAIL_163_PASS,
-        from: process.env.UNICALL_EMAIL_163_FROM,
-        fromName: process.env.UNICALL_EMAIL_163_FROM_NAME,
-        to: splitList(process.env.UNICALL_EMAIL_163_TO)
-      },
-      gmail: {
-        service: 'gmail',
-        user: process.env.UNICALL_EMAIL_GMAIL_USER,
-        pass: process.env.UNICALL_EMAIL_GMAIL_PASS,
-        from: process.env.UNICALL_EMAIL_GMAIL_FROM,
-        fromName: process.env.UNICALL_EMAIL_GMAIL_FROM_NAME,
-        to: splitList(process.env.UNICALL_EMAIL_GMAIL_TO)
+        fromName: process.env.UNICALL_EMAIL_DEFAULT_FROM_NAME ?? '云端效率大师',
+        to: splitList(process.env.UNICALL_EMAIL_DEFAULT_TO),
+        messageType: 'html',
+        template: 'gameNotification',
+        templateOptions: {
+          appName: '云端效率大师',
+          teamName: '运维管理团队',
+          recipientName: '张华',
+          eventName: '游戏服务状态通知',
+          eventTitle: '副本匹配队列恢复正常',
+          eventDescription: '匹配服务短暂抖动后已自动恢复。',
+          actionUrl: 'https://example.com/game/events',
+          actionText: '查看运行详情'
+        }
       }
     }
   },
@@ -151,19 +140,19 @@ function splitNumberList(value) {
     .filter((item) => Number.isFinite(item));
 }
 
-function numberOrDefault(value, fallback) {
+function optionalNumber(value) {
   if (!value) {
-    return fallback;
+    return undefined;
   }
 
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function booleanOrDefault(value, fallback) {
+function optionalBoolean(value) {
   if (!value) {
-    return fallback;
+    return undefined;
   }
 
-  return value === 'true';
+  return value === 'true' || value === '1';
 }

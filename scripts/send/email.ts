@@ -19,6 +19,8 @@ interface EmailProfile {
   readonly from?: string;
   readonly fromName?: string;
   readonly to?: readonly string[];
+  readonly messageType?: 'html' | 'text';
+  readonly template?: string;
 }
 
 const args = parseScriptArgs(process.argv.slice(2));
@@ -34,9 +36,12 @@ const authority = `${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${hos
 }`;
 const params = new URLSearchParams({
   from,
-  to: to.join(','),
-  secure: String(profile.secure ?? true)
+  to: to.join(',')
 });
+
+if (profile.secure !== undefined) {
+  params.set('secure', String(profile.secure));
+}
 
 if (profile.service) {
   params.set('service', profile.service);
@@ -48,7 +53,12 @@ if (profile.fromName) {
 
 const [result] = await notify(
   `smtp://${authority}?${params}`,
-  emailGameNotificationTemplate,
+  profile.messageType === 'text'
+    ? {
+        title: 'Unicall 邮件测试',
+        text: '这是一封文本测试邮件。'
+      }
+    : emailGameNotificationTemplate,
   {
     registry: createDefaultProviderRegistry()
   }
