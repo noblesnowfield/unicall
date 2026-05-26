@@ -65,7 +65,7 @@ export default {
         user: process.env.UNICALL_EMAIL_DEFAULT_USER,
         pass: process.env.UNICALL_EMAIL_DEFAULT_PASS,
         from: process.env.UNICALL_EMAIL_DEFAULT_FROM,
-        fromName: process.env.UNICALL_EMAIL_DEFAULT_FROM_NAME ?? '云端效率大师',
+        fromName: process.env.UNICALL_EMAIL_DEFAULT_FROM_NAME ?? '通知应用',
         to: splitList(process.env.UNICALL_EMAIL_DEFAULT_TO)
       }
     }
@@ -84,9 +84,9 @@ export default {
         messageType: 'html',
         template: 'gameNotification',
         templateOptions: {
-          appName: '云端效率大师',
-          teamName: '运维管理团队',
-          recipientName: '张华',
+          appName: '通知应用',
+          teamName: '通知应用团队',
+          recipientName: 'mzh',
           eventName: '游戏服务状态通知',
           eventTitle: '副本匹配队列恢复正常',
           eventDescription: '匹配服务短暂抖动后已自动恢复。',
@@ -116,9 +116,9 @@ export default {
       gameNotification: {
         messageType: 'html',
         template: 'gameNotification',
-        appName: '云端效率大师',
-        teamName: '运维管理团队',
-        recipientName: '张华',
+        appName: '通知应用',
+        teamName: '通知应用团队',
+        recipientName: 'mzh',
         eventName: '游戏服务状态通知',
         eventTitle: '副本匹配队列恢复正常',
         eventDescription: '匹配服务短暂抖动后已自动恢复。',

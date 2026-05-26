@@ -88,7 +88,7 @@ function createGameNotificationHtml(
           <tr>
             <td style="padding:30px 36px;">
               <p style="margin:0 0 16px;font-size:16px;line-height:1.7;font-weight:600;color:#1f2937;">尊敬的 ${escapeHtml(options.teamName)} / ${escapeHtml(options.recipientName)} ${escapeHtml(options.recipientSuffix)}：</p>
-              <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#4b5563;">您负责的 <strong style="color:#2563eb;">${escapeHtml(options.appName)}</strong> 触发了一次事件通知，请查看以下详情。</p>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#4b5563;"><strong style="color:#2563eb;">${escapeHtml(options.appName)}</strong> 触发了一次事件通知，请查看以下详情。</p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-left:4px solid #2563eb;border-radius:8px;margin-bottom:24px;">
                 <tr>
                   <td style="padding:18px 20px;">

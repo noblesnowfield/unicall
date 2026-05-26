@@ -657,7 +657,7 @@ function renderPage() {
     function renderMessageField(field, templateValues){
       const defaults = {
         messageType:'html', template:'gameNotification',
-        teamName:'运维管理团队', recipientName:'张华', recipientSuffix:'先生/女士', appName:'云端效率大师',
+        teamName:'运维管理团队', recipientName:'张华', recipientSuffix:'先生/女士', appName:'通知应用',
         eventName:'事件名称', eventTitle:'事件标题', eventDescription:'提示内容', screenshotMode:'local',
         screenshotUrl:'https://avatars.githubusercontent.com/u/6154722?s=48&v=4', screenshotBase64:'', actionUrl:'https://example.com/game/events', actionText:'进入控制台分析异常',
         title:'Unicall 测试推送', text:'测试推送', html:'<h1>Unicall 测试推送</h1><p>这是一条测试消息。</p>'

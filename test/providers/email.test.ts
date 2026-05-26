@@ -70,7 +70,7 @@ describe('EmailProvider', () => {
     const mimeMessage = await createEmailMimeMessage(
       {
         from: 'robot@example.com',
-        fromName: '云端效率大师',
+        fromName: '通知应用',
         to: ['admin@example.com'],
         subject: '部署完成'
       },
