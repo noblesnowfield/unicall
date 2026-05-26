@@ -18,4 +18,15 @@ export type { GameNotificationEmailOptions } from './email';
 export { MiaotixingProvider, miaotixingProviderFactory } from './miaotixing';
 export { PushplusProvider, pushplusProviderFactory } from './pushplus';
 export { WebhookProvider, webhookProviderFactory } from './webhook';
-export { WxPusherProvider, wxPusherProviderFactory } from './wxpusher';
+export {
+  createWxPusherQrCode,
+  queryWxPusherQrCodeUid,
+  WxPusherProvider,
+  wxPusherProviderFactory
+} from './wxpusher';
+export type {
+  CreateWxPusherQrCodeOptions,
+  QueryWxPusherQrCodeUidOptions,
+  WxPusherQrCodeResult,
+  WxPusherQrCodeUidResult
+} from './wxpusher';

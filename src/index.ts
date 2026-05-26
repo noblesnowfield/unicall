@@ -10,6 +10,7 @@ export {
   createDefaultProviderRegistry,
   createEmailMimeMessage,
   createGameNotificationEmail,
+  createWxPusherQrCode,
   EmailProvider,
   formatEmailAddress,
   mailtoProviderFactory,
@@ -24,11 +25,18 @@ export {
   WebhookProvider,
   webhookProviderFactory,
   WxPusherProvider,
+  queryWxPusherQrCodeUid,
   wxPusherProviderFactory
 } from './providers';
 export type { SmtpConnectionOptions, SmtpTransport } from './providers';
 export type { ResolvedSmtpEndpoint, SmtpPreset, SmtpPresetName } from './providers';
 export type { GameNotificationEmailOptions } from './providers';
+export type {
+  CreateWxPusherQrCodeOptions,
+  QueryWxPusherQrCodeUidOptions,
+  WxPusherQrCodeResult,
+  WxPusherQrCodeUidResult
+} from './providers';
 export { normalizeProtocol, parseNotificationUrl } from './parser';
 export {
   AuthenticationError,

@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  createWxPusherQrCode,
   InvalidProviderConfigError,
   NotificationRuntime,
   ProviderRegistry,
+  queryWxPusherQrCodeUid,
   wxPusherProviderFactory
 } from '../../src';
 
@@ -57,5 +59,88 @@ describe('WxPusherProvider', () => {
     expect(() =>
       new NotificationRuntime({ registry }).add('wxpusher://AT_XYZ')
     ).toThrow(InvalidProviderConfigError);
+  });
+
+  it('创建参数二维码用于扫码获取 UID', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: 1000,
+          data: {
+            code: 'QR_CODE',
+            qrCodeUrl: 'https://wxpusher.example/qrcode.jpg',
+            url: 'https://wxpusher.example/subscribe'
+          }
+        }),
+        {
+          status: 200,
+          headers: {
+            'content-type': 'application/json'
+          }
+        }
+      )
+    );
+
+    const result = await createWxPusherQrCode({
+      appToken: 'AT_XYZ',
+      extra: 'unicall-local-test',
+      validTime: 1800
+    });
+
+    expect(result).toEqual({
+      code: 'QR_CODE',
+      qrCodeUrl: 'https://wxpusher.example/qrcode.jpg',
+      url: 'https://wxpusher.example/subscribe',
+      raw: {
+        code: 1000,
+        data: {
+          code: 'QR_CODE',
+          qrCodeUrl: 'https://wxpusher.example/qrcode.jpg',
+          url: 'https://wxpusher.example/subscribe'
+        }
+      }
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://wxpusher.zjiecode.com/api/fun/create/qrcode',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          appToken: 'AT_XYZ',
+          extra: 'unicall-local-test',
+          validTime: 1800
+        })
+      })
+    );
+  });
+
+  it('查询参数二维码扫码后的 UID', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ code: 1000, data: { uid: 'UID_SCAN' } }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json'
+        }
+      })
+    );
+
+    const result = await queryWxPusherQrCodeUid({ code: 'QR_CODE' });
+
+    expect(result).toEqual({
+      uid: 'UID_SCAN',
+      raw: {
+        code: 1000,
+        data: {
+          uid: 'UID_SCAN'
+        }
+      }
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL('https://wxpusher.zjiecode.com/api/fun/scan-qrcode-uid?code=QR_CODE'),
+      expect.objectContaining({
+        method: 'GET'
+      })
+    );
   });
 });
