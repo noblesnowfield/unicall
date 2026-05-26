@@ -200,8 +200,9 @@ async function sendSelectedChannels(payload) {
     const profileName = getProfileName(config, channel, sourceProfileName);
     const profile = getProfile(config, channel, profileName);
     const templateValues = getTemplateValues(config, channel, profileName);
+    const baseValues = channel === 'email' ? resolveEmailProfileDefaults(profile) : profile;
     const values = {
-      ...profile,
+      ...baseValues,
       ...removeEmpty(payload.channelValues?.[channel] ?? {})
     };
     const mergedMessage = {
@@ -249,7 +250,7 @@ async function sendChannel(channel, profileName, values, messageValues) {
   }
 
   if (channel === 'pushplus') {
-    const [result] = await unicall.notify(createPushplusUrl(values), createTextMessage(messageValues), {
+    const [result] = await unicall.notify(createPushplusUrl(values), createPushplusMessage(messageValues), {
       registry
     });
 
@@ -399,6 +400,28 @@ function createPushplusMessage(values) {
   }
 
   return createTextMessage(values);
+}
+
+function resolveEmailProfileDefaults(values) {
+  const service = typeof values.service === 'string' ? values.service : undefined;
+  const host = typeof values.host === 'string' ? values.host : undefined;
+
+  if (!service && !host) {
+    return values;
+  }
+
+  const endpoint = unicall.resolveSmtpEndpoint(service, {
+    ...(host ? { host } : {}),
+    ...(values.port ? { port: String(values.port) } : {}),
+    ...(values.secure !== undefined ? { secure: String(values.secure) } : {})
+  });
+
+  return {
+    ...values,
+    host: values.host || endpoint.host,
+    port: values.port || endpoint.port,
+    secure: values.secure ?? endpoint.secure
+  };
 }
 
 function createEmailUrl(values) {
@@ -1058,11 +1081,28 @@ function renderPage() {
       document.getElementById('status').textContent = '发送中...';
       const endpoint = active === 'webhook' && readUiList(values.webhookTargets).length > 0 ? '/api/notify' : '/api/send';
       const payload = endpoint === '/api/notify'
-        ? {profile, channels: values.webhookTargets, message}
+        ? {profile, channels: values.webhookTargets, channelValues: collectNotifyChannelValues(values.webhookTargets, profile), message}
         : {channel:active, profile, values, message};
       const res = await fetch(endpoint, {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(payload)});
       const body = await res.json();
       document.getElementById('status').textContent = JSON.stringify(body, null, 2);
+    }
+    function collectNotifyChannelValues(targets, sourceProfile){
+      const values = {};
+      for(const channel of readUiList(targets)){
+        if(channel === 'webhook') continue;
+        const profile = getProfileForChannel(channel, sourceProfile);
+        const rawValues = config.channels?.[channel]?.[profile] || {};
+        values[channel] = channel === 'email' ? applyEmailPresetDefaults(rawValues) : rawValues;
+      }
+      return values;
+    }
+    function getProfileForChannel(channel, preferredProfile){
+      const profiles = config.channels?.[channel] || {};
+      if(profiles[preferredProfile]) return preferredProfile;
+      if(profiles[config.defaultProfile]) return config.defaultProfile;
+      if(profiles.default) return 'default';
+      return Object.keys(profiles)[0] || preferredProfile;
     }
     function collect(kind){
       const out = {};
