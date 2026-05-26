@@ -44,6 +44,20 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    if (request.method === 'POST' && requestUrl.pathname === '/api/wxpusher/qrcode') {
+      const payload = await readJsonBody(request);
+      const result = await createWxPusherQrCode(payload);
+      sendJson(response, result);
+      return;
+    }
+
+    if (request.method === 'POST' && requestUrl.pathname === '/api/wxpusher/qrcode/uid') {
+      const payload = await readJsonBody(request);
+      const result = await queryWxPusherQrCodeUid(payload);
+      sendJson(response, result);
+      return;
+    }
+
     response.writeHead(404);
     response.end('Not Found');
   } catch (error) {
@@ -119,6 +133,34 @@ async function sendNotification(payload) {
   }
 
   throw new Error(`暂不支持的渠道: ${channel}`);
+}
+
+async function createWxPusherQrCode(payload) {
+  const values = await getMergedChannelValues(payload, 'wxpusher');
+  const validTime = optionalNumber(values.qrValidTime);
+
+  return unicall.createWxPusherQrCode({
+    appToken: readRequired(values.appToken, 'wxpusher.appToken'),
+    extra: readRequired(values.qrExtra, 'wxpusher.qrExtra'),
+    ...(validTime !== undefined ? { validTime } : {})
+  });
+}
+
+async function queryWxPusherQrCodeUid(payload) {
+  return unicall.queryWxPusherQrCodeUid({
+    code: readRequired(payload.code, 'wxpusher.qrCode.code')
+  });
+}
+
+async function getMergedChannelValues(payload, channel) {
+  const config = await loadConfig();
+  const profileName = payload.profile ?? config.defaultProfile ?? 'default';
+  const profile = getProfile(config, channel, profileName);
+
+  return {
+    ...profile,
+    ...removeEmpty(payload.values ?? {})
+  };
 }
 
 async function createEmailMessage(values) {
@@ -384,6 +426,20 @@ function readList(value) {
   return [];
 }
 
+function optionalNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value !== 'string' || value.length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 function removeEmpty(values) {
   const output = {};
 
@@ -445,7 +501,7 @@ function renderPage() {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Unicall 推送测试</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;background:#f6f8fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.app{max-width:1180px;margin:0 auto;padding:28px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:20px}.title h1{margin:0 0 8px;font-size:26px}.title p{margin:0;color:#64748b}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tab{border:1px solid #d7deea;background:#fff;border-radius:7px;padding:10px 14px;cursor:pointer;font-weight:700;color:#334155}.tab.active{background:#1f5eff;color:#fff;border-color:#1f5eff}.panel{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:#fff;border:1px solid #e0e6ef;border-radius:8px;padding:18px}.card h2{font-size:16px;margin:0 0 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}label{font-size:13px;font-weight:700;color:#334155}input,select,textarea{width:100%;border:1px solid #cfd8e6;border-radius:6px;padding:10px 11px;font:inherit;background:#fff}textarea{min-height:88px;resize:vertical}.hint{font-size:12px;color:#64748b}.secret{color:#8a5a00}.actions{display:flex;gap:10px;align-items:center;margin-top:16px}.btn{border:0;border-radius:6px;background:#1f5eff;color:#fff;padding:11px 18px;font-weight:800;cursor:pointer}.btn.secondary{background:#e8eef8;color:#1e293b}.status{white-space:pre-wrap;background:#0f172a;color:#dbeafe;border-radius:8px;padding:14px;min-height:90px;overflow:auto}.preview{width:100%;border:1px solid #e0e6ef;border-radius:8px}.note{padding:12px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin-bottom:12px}@media(max-width:900px){.panel{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.top{display:block}}
+    *{box-sizing:border-box}body{margin:0;background:#f6f8fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.app{max-width:1180px;margin:0 auto;padding:28px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:20px}.title h1{margin:0 0 8px;font-size:26px}.title p{margin:0;color:#64748b}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tab{border:1px solid #d7deea;background:#fff;border-radius:7px;padding:10px 14px;cursor:pointer;font-weight:700;color:#334155}.tab.active{background:#1f5eff;color:#fff;border-color:#1f5eff}.panel{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:#fff;border:1px solid #e0e6ef;border-radius:8px;padding:18px}.card h2{font-size:16px;margin:0 0 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}label{font-size:13px;font-weight:700;color:#334155}input,select,textarea{width:100%;border:1px solid #cfd8e6;border-radius:6px;padding:10px 11px;font:inherit;background:#fff}textarea{min-height:88px;resize:vertical}.hint{font-size:12px;color:#64748b}.secret{color:#8a5a00}.actions{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}.btn{border:0;border-radius:6px;background:#1f5eff;color:#fff;padding:11px 18px;font-weight:800;cursor:pointer}.btn.secondary{background:#e8eef8;color:#1e293b}.status{white-space:pre-wrap;background:#0f172a;color:#dbeafe;border-radius:8px;padding:14px;min-height:90px;overflow:auto}.preview{width:100%;border:1px solid #e0e6ef;border-radius:8px}.qrbox{display:grid;grid-template-columns:180px 1fr;gap:14px;align-items:start}.qrbox img{width:180px;height:180px;object-fit:contain;border:1px solid #d7deea;border-radius:8px;background:#fff}.qr-placeholder{width:180px;height:180px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed #cbd5e1;border-radius:8px;color:#64748b;background:#f8fafc}.note{padding:12px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin-bottom:12px}@media(max-width:900px){.panel{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.top{display:block}.qrbox{grid-template-columns:1fr}.qrbox img,.qr-placeholder{width:100%;height:auto;min-height:180px}}
   </style>
 </head>
 <body>
@@ -480,6 +536,10 @@ function renderPage() {
         <h2>本地图片预览</h2>
         <img class="preview" src="/assets/images/demo.png" alt="本地测试图片">
       </div>
+      <div class="card" id="wxpusherQrCard" hidden>
+        <h2>WxPusher 扫码绑定</h2>
+        <div id="wxpusherQrPanel"></div>
+      </div>
     </section>
   </main>
   <script>
@@ -496,6 +556,7 @@ function renderPage() {
     let config = {};
     let active = 'email';
     let selectedProfiles = {};
+    let wxpusherQrState = {};
     const emailHtmlTemplates = {
       gameNotification: '游戏通知模板',
       rawHtml: '自定义 HTML'
@@ -505,7 +566,7 @@ function renderPage() {
       email: ['service','host','port','secure','user','pass','from','fromName','to'],
       pushplus: ['token','topic','template'],
       miaotixing: ['id','app','type','option'],
-      wxpusher: ['appToken','uids','topicIds'],
+      wxpusher: ['appToken','uids','topicIds','qrCodeUrl','subscribeUrl','qrExtra','qrValidTime'],
       webhook: ['url']
     };
     const messages = {
@@ -547,8 +608,10 @@ function renderPage() {
       document.getElementById('profileSelect').onchange = event => { selectedProfiles[active] = event.target.value; renderForms(); };
       const serviceSelect = document.querySelector('[data-field="service"]');
       if(serviceSelect) serviceSelect.onchange = event => applyEmailPresetToInputs(event.target.value);
+      bindWxPusherQrInputs();
       const templateValues = getTemplateDefaults(active, profile);
       renderMessageForm(templateValues);
+      renderWxPusherQrPanel(values);
     }
     function renderProfileSelect(profiles, profile){
       return '<div class="field full"><label>profile</label><select id="profileSelect">'+profiles.map(item => '<option value="'+item+'" '+(item===profile?'selected':'')+'>'+item+'</option>').join('')+'</select><span class="hint">来自 unicall.config.local.mjs；不存在时回退到 unicall.config.example.mjs</span></div>';
@@ -560,7 +623,16 @@ function renderPage() {
         return '<div class="field"><label>service</label><select data-kind="value" data-field="service">'+options+'</select><span class="hint">选择后自动填写 host、port、secure；custom 表示手动填写 SMTP。</span></div>';
       }
       const display = normalizeValue(value);
-      return '<div class="field '+(field==='to'||field==='url'?'full':'')+'"><label>'+field+'</label><input data-kind="value" data-field="'+field+'" type="text" placeholder="'+display.placeholder+'" value="'+display.value+'"></div>';
+      return '<div class="field '+(field==='to'||field==='url'||field==='qrCodeUrl'||field==='subscribeUrl'?'full':'')+'"><label>'+field+'</label><input data-kind="value" data-field="'+field+'" type="text" placeholder="'+display.placeholder+'" value="'+display.value+'">'+renderConfigHint(field)+'</div>';
+    }
+    function renderConfigHint(field){
+      const hints = {
+        qrCodeUrl: '选填：已有应用二维码或主题二维码图片地址，填写后这里直接展示。',
+        subscribeUrl: '选填：已有应用或主题订阅链接。',
+        qrExtra: '创建临时参数二维码时携带的来源标识，最长 64 位。',
+        qrValidTime: '创建临时参数二维码的有效期，单位秒。'
+      };
+      return hints[field] ? '<span class="hint">'+hints[field]+'</span>' : '';
     }
     function getTemplateDefaults(channel, profile){
       const templates = config.templates?.[channel] || {};
@@ -618,6 +690,58 @@ function renderPage() {
         recipientName: '选填：不填时模板默认显示“用户”。'
       };
       return hints[field] ? '<span class="hint">'+hints[field]+'</span>' : '';
+    }
+    function bindWxPusherQrInputs(){
+      if(active !== 'wxpusher') return;
+      ['qrCodeUrl','subscribeUrl'].forEach(field => {
+        const input = document.querySelector('[data-kind="value"][data-field="'+field+'"]');
+        if(input) input.oninput = () => renderWxPusherQrPanel({...collect('value'), ...wxpusherQrState});
+      });
+    }
+    function renderWxPusherQrPanel(values){
+      const card = document.getElementById('wxpusherQrCard');
+      if(active !== 'wxpusher'){
+        card.hidden = true;
+        return;
+      }
+      card.hidden = false;
+      const qrCodeUrl = wxpusherQrState.qrCodeUrl || values.qrCodeUrl || '';
+      const subscribeUrl = wxpusherQrState.url || values.subscribeUrl || '';
+      const code = wxpusherQrState.code || '';
+      const image = qrCodeUrl ? '<img src="'+qrCodeUrl+'" alt="WxPusher 二维码">' : '<div class="qr-placeholder">填写二维码图片地址<br>或生成临时二维码</div>';
+      document.getElementById('wxpusherQrPanel').innerHTML = '<div class="qrbox">'+image+'<div><div class="hint">用于让用户扫码关注应用或主题。生成参数二维码后，可以查询最近一次扫码得到的 UID，并自动填入 uids。</div><div class="actions"><button class="btn secondary" id="createWxPusherQr">生成临时二维码</button><button class="btn secondary" id="queryWxPusherUid">查询扫码 UID</button></div><div class="hint">二维码 code：'+(code || '暂无')+'</div>'+(subscribeUrl ? '<div class="hint">订阅链接：<a href="'+subscribeUrl+'" target="_blank" rel="noreferrer">'+subscribeUrl+'</a></div>' : '')+'<div class="status" id="wxpusherQrStatus">等待操作...</div></div></div>';
+      document.getElementById('createWxPusherQr').onclick = createWxPusherQr;
+      document.getElementById('queryWxPusherUid').onclick = queryWxPusherUid;
+    }
+    async function createWxPusherQr(){
+      document.getElementById('wxpusherQrStatus').textContent = '生成中...';
+      const res = await fetch('/api/wxpusher/qrcode', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({profile:currentProfile(), values:collect('value')})});
+      const body = await res.json();
+      if(body.code || body.qrCodeUrl || body.url){
+        wxpusherQrState = body;
+        const qrInput = document.querySelector('[data-kind="value"][data-field="qrCodeUrl"]');
+        const subscribeInput = document.querySelector('[data-kind="value"][data-field="subscribeUrl"]');
+        if(qrInput && body.qrCodeUrl) qrInput.value = body.qrCodeUrl;
+        if(subscribeInput && body.url) subscribeInput.value = body.url;
+        renderWxPusherQrPanel({...collect('value'), ...body});
+        document.getElementById('wxpusherQrStatus').textContent = JSON.stringify(body, null, 2);
+        return;
+      }
+      document.getElementById('wxpusherQrStatus').textContent = JSON.stringify(body, null, 2);
+    }
+    async function queryWxPusherUid(){
+      if(!wxpusherQrState.code){
+        document.getElementById('wxpusherQrStatus').textContent = '请先生成临时二维码，再查询扫码 UID。';
+        return;
+      }
+      document.getElementById('wxpusherQrStatus').textContent = '查询中...';
+      const res = await fetch('/api/wxpusher/qrcode/uid', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({code:wxpusherQrState.code})});
+      const body = await res.json();
+      if(body.uid){
+        const input = document.querySelector('[data-kind="value"][data-field="uids"]');
+        if(input) input.value = body.uid;
+      }
+      document.getElementById('wxpusherQrStatus').textContent = JSON.stringify(body, null, 2);
     }
     function normalizeValue(value){
       if(Array.isArray(value)) return { value:value.join(','), placeholder:'' };
