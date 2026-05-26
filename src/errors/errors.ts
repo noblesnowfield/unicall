@@ -35,6 +35,15 @@ export class InvalidMessageError extends NotificationError {
   }
 }
 
+export class InvalidConfigError extends NotificationError {
+  public constructor(message: string, cause?: unknown) {
+    super(`Invalid unicall config: ${message}`, {
+      code: 'INVALID_CONFIG',
+      cause
+    });
+  }
+}
+
 export class InvalidProviderConfigError extends NotificationError {
   public constructor(provider: string, protocol: string, message: string) {
     super(`Invalid provider config for ${provider}: ${message}`, {

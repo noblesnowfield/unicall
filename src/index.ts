@@ -5,6 +5,12 @@ export {
   retryMiddleware,
   timeoutMiddleware
 } from './middleware';
+export {
+  loadUnicallJsonConfig,
+  loadUrlsFromEnv,
+  parseUnicallUrls,
+  resolveConfigTargets
+} from './config';
 export { ProviderRegistry } from './provider';
 export {
   createDefaultProviderRegistry,
@@ -48,6 +54,7 @@ export { normalizeProtocol, parseNotificationUrl } from './parser';
 export {
   AuthenticationError,
   DuplicateProviderError,
+  InvalidConfigError,
   InvalidMessageError,
   InvalidProviderConfigError,
   InvalidUrlError,
@@ -57,6 +64,12 @@ export {
   RateLimitError,
   TimeoutError
 } from './errors';
+export type {
+  NotificationTargetConfig,
+  ResolveConfigTargetsOptions,
+  UnicallConfig,
+  UnicallConfigProfile
+} from './config';
 export type {
   NotificationAttachment,
   NotificationFormat,

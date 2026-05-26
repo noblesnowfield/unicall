@@ -3,6 +3,7 @@ export type { NotificationErrorOptions } from './NotificationError';
 export {
   AuthenticationError,
   DuplicateProviderError,
+  InvalidConfigError,
   InvalidMessageError,
   InvalidProviderConfigError,
   InvalidUrlError,
