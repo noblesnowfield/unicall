@@ -1,9 +1,12 @@
 export { NotificationError } from './NotificationError';
 export type { NotificationErrorOptions } from './NotificationError';
 export {
+  AuthenticationError,
   DuplicateProviderError,
   InvalidMessageError,
   InvalidUrlError,
   ProviderNotFoundError,
-  ProviderSendError
+  ProviderSendError,
+  RateLimitError,
+  TimeoutError
 } from './errors';

@@ -5,7 +5,8 @@ import {
   NotificationRuntime,
   notify,
   ProviderRegistry,
-  ProviderSendError
+  ProviderSendError,
+  retryMiddleware
 } from '../../src';
 import type {
   NotificationMessage,
@@ -143,5 +144,46 @@ describe('NotificationRuntime', () => {
 
     expect(results).toHaveLength(1);
     expect(results[0]?.success).toBe(true);
+  });
+
+  it('支持单次发送追加 middleware', async () => {
+    let attempts = 0;
+    const registry = new ProviderRegistry([
+      createMockFactory('send-level', {
+        send() {
+          attempts += 1;
+
+          if (attempts === 1) {
+            return {
+              provider: 'send-level-provider',
+              protocol: 'send-level',
+              success: false,
+              retryable: true
+            };
+          }
+
+          return {
+            provider: 'send-level-provider',
+            protocol: 'send-level',
+            success: true
+          };
+        }
+      })
+    ]);
+    const runtime = new NotificationRuntime({ registry }).add(
+      'send-level://token'
+    );
+
+    const [result] = await runtime.send(
+      {
+        text: 'hello'
+      },
+      {
+        middleware: [retryMiddleware({ retries: 1 })]
+      }
+    );
+
+    expect(result?.success).toBe(true);
+    expect(attempts).toBe(2);
   });
 });

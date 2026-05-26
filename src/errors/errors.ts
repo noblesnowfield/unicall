@@ -51,3 +51,48 @@ export class ProviderSendError extends NotificationError {
     });
   }
 }
+
+export class AuthenticationError extends NotificationError {
+  public constructor(provider: string, protocol: string, cause?: unknown) {
+    super(`Notification provider authentication failed: ${provider}`, {
+      code: 'AUTHENTICATION_FAILED',
+      provider,
+      protocol,
+      cause
+    });
+  }
+}
+
+export class TimeoutError extends NotificationError {
+  public readonly timeoutMs: number;
+
+  public constructor(provider: string, protocol: string, timeoutMs: number) {
+    super(`Notification provider timed out: ${provider}`, {
+      code: 'TIMEOUT',
+      provider,
+      protocol,
+      retryable: true
+    });
+    this.timeoutMs = timeoutMs;
+  }
+}
+
+export class RateLimitError extends NotificationError {
+  public readonly retryAfterMs: number | undefined;
+
+  public constructor(
+    provider: string,
+    protocol: string,
+    retryAfterMs?: number,
+    cause?: unknown
+  ) {
+    super(`Notification provider rate limited: ${provider}`, {
+      code: 'RATE_LIMITED',
+      provider,
+      protocol,
+      retryable: true,
+      cause
+    });
+    this.retryAfterMs = retryAfterMs;
+  }
+}

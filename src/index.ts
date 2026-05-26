@@ -1,13 +1,22 @@
 export { NotificationRuntime, notify } from './runtime';
+export {
+  composeMiddleware,
+  loggingMiddleware,
+  retryMiddleware,
+  timeoutMiddleware
+} from './middleware';
 export { ProviderRegistry } from './provider';
 export { normalizeProtocol, parseNotificationUrl } from './parser';
 export {
+  AuthenticationError,
   DuplicateProviderError,
   InvalidMessageError,
   InvalidUrlError,
   NotificationError,
   ProviderNotFoundError,
-  ProviderSendError
+  ProviderSendError,
+  RateLimitError,
+  TimeoutError
 } from './errors';
 export type {
   NotificationAttachment,
@@ -21,4 +30,12 @@ export type {
   ProviderFactory,
   SendResult
 } from './types/public';
+export type {
+  MiddlewareContext,
+  MiddlewareNext,
+  NotificationLogger,
+  NotificationMiddleware,
+  RetryMiddlewareOptions,
+  TimeoutMiddlewareOptions
+} from './middleware';
 export type { NotificationUrl } from './parser';

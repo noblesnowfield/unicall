@@ -11,12 +11,14 @@ export async function notify(
   options: NotifyOptions = {}
 ): Promise<SendResult[]> {
   const runtime = new NotificationRuntime({
-    ...(options.registry ? { registry: options.registry } : {})
+    ...(options.registry ? { registry: options.registry } : {}),
+    ...(options.middleware ? { middleware: options.middleware } : {})
   });
 
   runtime.add(url);
 
   return runtime.send(message, {
-    ...(options.signal ? { signal: options.signal } : {})
+    ...(options.signal ? { signal: options.signal } : {}),
+    ...(options.middleware ? { middleware: options.middleware } : {})
   });
 }

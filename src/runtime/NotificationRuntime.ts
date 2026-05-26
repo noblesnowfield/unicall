@@ -3,8 +3,10 @@ import {
   NotificationError,
   ProviderSendError
 } from '../errors';
+import { composeMiddleware } from '../middleware';
 import { parseNotificationUrl } from '../parser';
 import { ProviderRegistry } from '../provider';
+import type { MiddlewareContext, NotificationMiddleware } from '../middleware';
 import type {
   NotificationMessage,
   NotificationProvider,
@@ -20,14 +22,17 @@ interface RuntimeTarget {
 
 export interface SendOptions {
   readonly signal?: AbortSignal;
+  readonly middleware?: readonly NotificationMiddleware[];
 }
 
 export class NotificationRuntime {
   private readonly registry: ProviderRegistry;
+  private readonly middleware: NotificationMiddleware[];
   private readonly targets: RuntimeTarget[] = [];
 
   public constructor(options: NotificationRuntimeOptions = {}) {
     this.registry = options.registry ?? new ProviderRegistry();
+    this.middleware = [...(options.middleware ?? [])];
   }
 
   public add(url: string | readonly string[]): this {
@@ -49,14 +54,22 @@ export class NotificationRuntime {
     return this.targets.map((target) => target.provider);
   }
 
+  public use(middleware: NotificationMiddleware): this {
+    this.middleware.push(middleware);
+
+    return this;
+  }
+
   public async send(
     message: NotificationMessage,
     options: SendOptions = {}
   ): Promise<SendResult[]> {
     assertMessageHasContent(message);
 
+    const middleware = [...this.middleware, ...(options.middleware ?? [])];
+    const pipeline = composeMiddleware(middleware);
     const tasks = this.targets.map((target) =>
-      sendToTarget(target, message, options)
+      sendToTarget(target, message, options, pipeline)
     );
     const settledResults = await Promise.allSettled(tasks);
 
@@ -95,15 +108,21 @@ function assertMessageHasContent(message: NotificationMessage): void {
 async function sendToTarget(
   target: RuntimeTarget,
   message: NotificationMessage,
-  options: SendOptions
+  options: SendOptions,
+  pipeline: ReturnType<typeof composeMiddleware>
 ): Promise<SendResult> {
   const startedAt = performance.now();
+  const context: MiddlewareContext = {
+    message,
+    provider: target.provider,
+    url: target.url,
+    state: {},
+    attempt: 1,
+    ...(options.signal ? { signal: options.signal } : {})
+  };
 
   try {
-    const result = await target.provider.send(message, {
-      url: target.url,
-      ...(options.signal ? { signal: options.signal } : {})
-    });
+    const result = await pipeline(context, () => dispatchProvider(context));
 
     return {
       ...result,
@@ -121,6 +140,15 @@ async function sendToTarget(
       error: normalizedError
     };
   }
+}
+
+async function dispatchProvider(
+  context: MiddlewareContext
+): Promise<SendResult> {
+  return context.provider.send(context.message, {
+    url: context.url,
+    ...(context.signal ? { signal: context.signal } : {})
+  });
 }
 
 function normalizeProviderError(

@@ -1,4 +1,5 @@
 import type { NotificationError } from '../errors/NotificationError';
+import type { NotificationMiddleware } from '../middleware/types';
 import type { NotificationUrl } from '../parser/NotificationUrl';
 
 export type NotificationFormat = 'text' | 'markdown' | 'html';
@@ -65,8 +66,10 @@ export interface ProviderFactory {
 
 export interface NotificationRuntimeOptions {
   readonly registry?: import('../provider/ProviderRegistry').ProviderRegistry;
+  readonly middleware?: readonly NotificationMiddleware[];
 }
 
 export interface NotifyOptions extends NotificationRuntimeOptions {
   readonly signal?: AbortSignal;
+  readonly middleware?: readonly NotificationMiddleware[];
 }
