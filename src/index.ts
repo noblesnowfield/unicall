@@ -7,15 +7,20 @@ export {
 } from './middleware';
 export { ProviderRegistry } from './provider';
 export {
+  createEmailMimeMessage,
+  EmailProvider,
+  mailtoProviderFactory,
   MiaotixingProvider,
   miaotixingProviderFactory,
   PushplusProvider,
   pushplusProviderFactory,
+  smtpProviderFactory,
   WebhookProvider,
   webhookProviderFactory,
   WxPusherProvider,
   wxPusherProviderFactory
 } from './providers';
+export type { SmtpConnectionOptions, SmtpTransport } from './providers';
 export { normalizeProtocol, parseNotificationUrl } from './parser';
 export {
   AuthenticationError,
