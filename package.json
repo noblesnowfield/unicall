@@ -26,7 +26,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "node scripts/release/clean-dist.mjs && tsup && node scripts/release/generate-checksums.mjs",
+    "build": "node scripts/release/clean-dist.mjs && tsup && node scripts/release/generate-checksums.mjs && node scripts/release/verify-browser-assets.mjs",
     "release:assets": "pnpm build",
     "push:ui": "node scripts/ui/test-push-server.mjs",
     "test": "vitest run",
