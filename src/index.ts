@@ -6,6 +6,7 @@ export {
   timeoutMiddleware
 } from './middleware';
 export { ProviderRegistry } from './provider';
+export { WebhookProvider, webhookProviderFactory } from './providers';
 export { normalizeProtocol, parseNotificationUrl } from './parser';
 export {
   AuthenticationError,
