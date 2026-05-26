@@ -7,6 +7,7 @@ export {
 } from './middleware';
 export { ProviderRegistry } from './provider';
 export {
+  createDefaultProviderRegistry,
   createEmailMimeMessage,
   EmailProvider,
   mailtoProviderFactory,

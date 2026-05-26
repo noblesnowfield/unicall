@@ -1,3 +1,4 @@
+export { createDefaultProviderRegistry } from './defaultRegistry';
 export {
   EmailProvider,
   mailtoProviderFactory,
