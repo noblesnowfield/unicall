@@ -5,6 +5,9 @@
   "type": "module",
   "license": "MIT",
   "sideEffects": false,
+  "bin": {
+    "unicall": "./dist/cli.js"
+  },
   "files": [
     "dist"
   ],
