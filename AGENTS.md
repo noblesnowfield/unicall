@@ -19,6 +19,10 @@
 * 当前第二优先级 Provider 包含邮件、喵提醒、Pushplus。
 * 每个 Phase 开发完成后，必须在 `doc/` 下补充对应阶段完成文档，说明完成内容、架构决策、影响文件、测试结果、取舍和下一阶段建议。
 * 每个 Phase 结束后都要检查并分析是否需要同步调整 `unicall` 本地文档和后续 `unicall-doc` VitePress 文档内容。
+* 测试和正式线上都优先使用 JS/TS 配置文件管理渠道结构、profile、模板和默认值；env / secret manager 只存放真实敏感值。
+* 仓库可提交 `unicall.config.example.mjs` 和 `.env.example`，本地真实配置使用 `unicall.config.local.mjs`、`.env.local` 或部署平台 secret，不得提交 Git。
+* 渠道手动推送脚本必须统一读取 JS 配置结构；多账号、多秘钥通过 JS 配置中的 profile 管理，真实值可来自 `process.env.UNICALL_<CHANNEL>_<PROFILE>_<FIELD>`。
+* 环境变量只承载实际值，命名应使用 `UNICALL_<CHANNEL>_<PROFILE>_<FIELD>`；避免在日志中输出真实值。
 * 文档、示例和测试脚本里的中文必须使用 UTF-8，避免中文乱码。
 
 ## Project Vision
