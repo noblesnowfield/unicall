@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "URL-driven notification runtime for Node.js and browser integrations.",
   "type": "module",
+  "author": "beichen2023",
   "license": "MIT",
   "sideEffects": false,
   "bin": {
