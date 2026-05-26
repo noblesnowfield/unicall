@@ -51,6 +51,8 @@ export default {
 
     email: {
       default: {
+        // 通用邮件发信配置：只放渠道、账号、收发件人等发送必需项。
+        // qq / foxmail / 163 / gmail / outlook 等默认 host、port 在代码 smtpPresets 中维护。
         service: process.env.UNICALL_EMAIL_DEFAULT_SERVICE || 'qq',
         host: process.env.UNICALL_EMAIL_DEFAULT_HOST,
         port: optionalNumber(process.env.UNICALL_EMAIL_DEFAULT_PORT),
@@ -59,19 +61,7 @@ export default {
         pass: process.env.UNICALL_EMAIL_DEFAULT_PASS,
         from: process.env.UNICALL_EMAIL_DEFAULT_FROM,
         fromName: process.env.UNICALL_EMAIL_DEFAULT_FROM_NAME ?? '云端效率大师',
-        to: splitList(process.env.UNICALL_EMAIL_DEFAULT_TO),
-        messageType: 'html',
-        template: 'gameNotification',
-        templateOptions: {
-          appName: '云端效率大师',
-          teamName: '运维管理团队',
-          recipientName: '张华',
-          eventName: '游戏服务状态通知',
-          eventTitle: '副本匹配队列恢复正常',
-          eventDescription: '匹配服务短暂抖动后已自动恢复。',
-          actionUrl: 'https://example.com/game/events',
-          actionText: '查看运行详情'
-        }
+        to: splitList(process.env.UNICALL_EMAIL_DEFAULT_TO)
       }
     }
   },
@@ -84,6 +74,26 @@ export default {
       }
     },
     email: {
+      default: {
+        // 邮件内容配置：文本/HTML、模板名称和模板可选字段都放这里。
+        messageType: 'html',
+        template: 'gameNotification',
+        templateOptions: {
+          appName: '云端效率大师',
+          teamName: '运维管理团队',
+          recipientName: '张华',
+          eventName: '游戏服务状态通知',
+          eventTitle: '副本匹配队列恢复正常',
+          eventDescription: '匹配服务短暂抖动后已自动恢复。',
+          actionUrl: 'https://example.com/game/events',
+          actionText: '查看运行详情'
+        }
+      },
+      text: {
+        messageType: 'text',
+        title: 'Unicall 邮件测试',
+        text: '这是一封文本测试邮件。'
+      },
       demo: {
         subject: 'Unicall 邮件测试',
         html: '<h1>Unicall</h1><p>这是一封 HTML 测试邮件。</p>',
@@ -95,6 +105,8 @@ export default {
         ]
       },
       gameNotification: {
+        messageType: 'html',
+        template: 'gameNotification',
         appName: '云端效率大师',
         teamName: '运维管理团队',
         recipientName: '张华',

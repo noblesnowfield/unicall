@@ -9,6 +9,7 @@ export interface UnicallScriptArgs {
 export interface UnicallConfig {
   readonly defaultProfile?: string;
   readonly channels?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+  readonly templates?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
 }
 
 export function parseScriptArgs(argv: readonly string[]): UnicallScriptArgs {
