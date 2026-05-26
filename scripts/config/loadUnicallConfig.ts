@@ -19,14 +19,16 @@ export function parseScriptArgs(argv: readonly string[]): UnicallScriptArgs {
   for (let index = 0; index < argv.length; index += 1) {
     const item = argv[index];
 
-    if (item === '--config' && argv[index + 1]) {
-      configPath = argv[index + 1];
+    const next = argv[index + 1];
+
+    if (item === '--config' && next) {
+      configPath = next;
       index += 1;
       continue;
     }
 
-    if (item === '--profile' && argv[index + 1]) {
-      profile = argv[index + 1];
+    if (item === '--profile' && next) {
+      profile = next;
       index += 1;
     }
   }

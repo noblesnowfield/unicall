@@ -139,7 +139,22 @@ export default {
       }
     },
     wxpusher: {
+      default: {
+        // WxPusher 支持 HTML，可复用通用 HTML 模板。
+        template: 'gameNotification',
+        templateOptions: {
+          appName: '通知应用',
+          nickname: 'mzh',
+          eventName: '游戏服务状态通知',
+          eventTitle: '副本匹配队列恢复正常',
+          eventDescription: '匹配服务短暂抖动后已自动恢复。',
+          screenshotUrl: 'https://avatars.githubusercontent.com/u/6154722?s=48&v=4',
+          actionUrl: 'https://example.com/game/events',
+          actionText: '查看运行详情'
+        }
+      },
       demo: {
+        template: 'rawHtml',
         title: 'Unicall WxPusher 测试',
         html: '<h1>Unicall</h1><p>这是一条 HTML 测试消息。</p>'
       }

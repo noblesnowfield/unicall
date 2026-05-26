@@ -237,6 +237,19 @@ function createTextMessage(values) {
 }
 
 function createHtmlMessage(values) {
+  if (values.template === 'gameNotification') {
+    return unicall.createGameNotificationMessage({
+      nickname: values.nickname || undefined,
+      appName: values.appName || undefined,
+      eventName: values.eventName || '事件名称',
+      eventTitle: values.eventTitle || '事件标题',
+      eventDescription: values.eventDescription || '提示内容',
+      screenshotUrl: values.screenshotUrl || undefined,
+      actionUrl: values.actionUrl || undefined,
+      actionText: values.actionText || undefined
+    });
+  }
+
   return {
     title: values.title || 'Unicall 测试推送',
     html: values.html || '<h1>Unicall 测试推送</h1><p>这是一条测试消息。</p>'
@@ -608,7 +621,8 @@ function renderPage() {
       emailRawHtml: ['messageType','template','title','html'],
       pushplus: ['title','text'],
       miaotixing: ['title','text'],
-      wxpusher: ['title','html'],
+      wxpusherGameNotification: ['template','nickname','appName','eventName','eventTitle','eventDescription','screenshotUrl','actionUrl','actionText'],
+      wxpusherRawHtml: ['template','title','html'],
       webhook: ['title','text']
     };
 
@@ -673,7 +687,7 @@ function renderPage() {
     function getTemplateDefaults(channel, profile){
       const templates = config.templates?.[channel] || {};
       const selected = templates[profile] || templates.default || templates.demo || {};
-      if(channel === 'email' && selected.templateOptions){
+      if((channel === 'email' || channel === 'wxpusher') && selected.templateOptions){
         return {...selected, ...selected.templateOptions};
       }
       return selected;
@@ -686,6 +700,9 @@ function renderPage() {
       });
     }
     function getMessageKey(templateValues){
+      if(active === 'wxpusher'){
+        return templateValues?.template === 'gameNotification' ? 'wxpusherGameNotification' : 'wxpusherRawHtml';
+      }
       if(active !== 'email') return active;
       if(templateValues?.messageType === 'text') return 'emailText';
       return templateValues?.template === 'rawHtml' ? 'emailRawHtml' : 'emailGameNotification';

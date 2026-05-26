@@ -29,9 +29,14 @@ export {
   queryWxPusherQrCodeUid,
   wxPusherProviderFactory
 } from './providers';
+export {
+  createGameNotificationHtml,
+  createGameNotificationMessage
+} from './templates';
 export type { SmtpConnectionOptions, SmtpTransport } from './providers';
 export type { ResolvedSmtpEndpoint, SmtpPreset, SmtpPresetName } from './providers';
 export type { GameNotificationEmailOptions } from './providers';
+export type { GameNotificationTemplateOptions } from './templates';
 export type {
   CreateWxPusherQrCodeOptions,
   QueryWxPusherQrCodeUidOptions,

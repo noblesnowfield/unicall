@@ -1,6 +1,13 @@
-import type { NotificationMessage } from '../../src';
+import { createGameNotificationMessage } from '../../src';
 
-export const wxpusherHtmlTemplate: NotificationMessage = {
-  title: 'Unicall WxPusher 测试',
-  html: '<h1>Unicall</h1><p>这是一条 HTML 测试消息。</p>'
-};
+export const wxpusherHtmlTemplate = createGameNotificationMessage({
+  nickname: '张华',
+  appName: '通知应用',
+  eventName: '游戏服务状态通知',
+  eventTitle: '副本匹配队列恢复正常',
+  eventDescription:
+    '匹配服务短暂抖动后已自动恢复，队列延迟回落至正常范围，系统已完成一次健康检查。',
+  screenshotUrl: 'https://avatars.githubusercontent.com/u/6154722?s=48&v=4',
+  actionUrl: 'https://example.com/game/events',
+  actionText: '查看运行详情'
+});
