@@ -1,28 +1,13 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
-const allowedBumps = new Set([
-  'patch',
-  'minor',
-  'major',
-  'prepatch',
-  'preminor',
-  'premajor',
-  'prerelease'
-]);
+const allowedBumps = new Set(['patch', 'minor', 'major']);
+const exactVersionPattern = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
 const bump = process.argv[2] ?? 'patch';
 
-function resolveCommand(command) {
-  if (process.platform === 'win32' && command === 'npm') {
-    return 'npm.cmd';
-  }
-
-  return command;
-}
-
 function run(command, args, options = {}) {
-  const result = spawnSync(resolveCommand(command), args, {
+  const result = spawnSync(command, args, {
     encoding: 'utf8',
     stdio: options.capture ? 'pipe' : 'inherit'
   });
@@ -46,14 +31,42 @@ function readPackageVersion() {
 }
 
 function ensureValidBump() {
-  const isExactVersion = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(bump);
+  const isExactVersion = exactVersionPattern.test(bump);
 
   if (!allowedBumps.has(bump) && !isExactVersion) {
     throw new Error(
       `版本参数无效: ${bump}\n` +
-        '可用参数: patch, minor, major, prepatch, preminor, premajor, prerelease 或明确版本号。'
+        '可用参数: patch, minor, major 或明确版本号，例如 0.3.0。'
     );
   }
+}
+
+function resolveNextVersion(currentVersion) {
+  if (exactVersionPattern.test(bump)) {
+    return bump;
+  }
+
+  const [major, minor, patch] = currentVersion.split('.').map(Number);
+
+  if (![major, minor, patch].every(Number.isInteger)) {
+    throw new Error(`当前版本号不是标准 semver: ${currentVersion}`);
+  }
+
+  if (bump === 'major') {
+    return `${major + 1}.0.0`;
+  }
+
+  if (bump === 'minor') {
+    return `${major}.${minor + 1}.0`;
+  }
+
+  return `${major}.${minor}.${patch + 1}`;
+}
+
+function writePackageVersion(nextVersion) {
+  const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
+  packageJson.version = nextVersion;
+  writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);
 }
 
 function ensureCleanWorktree() {
@@ -90,12 +103,13 @@ function main() {
 
   const branch = getCurrentBranch();
   const beforeVersion = readPackageVersion();
+  const nextVersion = resolveNextVersion(beforeVersion);
 
   console.log(`[release] 当前版本: ${beforeVersion}`);
   console.log(`[release] 升级类型: ${bump}`);
-  run('npm', ['version', bump, '--no-git-tag-version']);
+  console.log(`[release] 目标版本: ${nextVersion}`);
+  writePackageVersion(nextVersion);
 
-  const nextVersion = readPackageVersion();
   const tagName = `v${nextVersion}`;
   ensureTagDoesNotExist(tagName);
 
