@@ -1,47 +1,33 @@
 # Unicall
 
-Unicall 是一个 URL 驱动的轻量通知运行时 SDK，面向 Node.js / TypeScript 项目，提供 Provider 插件、中间件管线、统一消息模型和结构化错误。
+URL-driven notification runtime for Node.js and TypeScript.
 
-它不是简单的 Webhook 包装器，而是一个 runtime-first 的通知运行时：Runtime 负责编排 URL、Provider、中间件和发送结果；每个通知渠道作为 Provider 独立实现、独立测试。
+Unicall 是一个 URL 驱动的轻量通知运行时 SDK，面向 Node.js / TypeScript 项目，提供 Provider 插件、中间件管线、统一消息模型、结构化错误和浏览器友好的构建产物。
 
-## 项目状态
+它可以通过 `webhook://`、`smtp://`、`pushplus://`、`miaotixing://`、`wxpusher://` 等 Provider URL 发送通知，并支持在生产浏览器场景中通过后端代理安全接入。
 
-当前仓库处于首版开发阶段，已覆盖运行时内核、错误系统、中间件、配置能力、浏览器构建、本地测试页和首批 Provider。
+## Features
 
-已实现 Provider：
+- URL-driven configuration for notification targets.
+- Provider-based delivery architecture.
+- Middleware pipeline for retry, timeout, logging, metrics, dedupe and rate limiting.
+- Typed message model for `text`、`markdown`、`html` and attachments.
+- Structured errors based on `NotificationError`.
+- ESM-first Node.js entry, TypeScript declarations and browser builds.
+- China-friendly providers including Pushplus、喵提醒 and WxPusher.
 
-| Provider | 协议 | 适合场景 |
-| :--- | :--- | :--- |
-| Webhook | `webhook://` | 自有服务、内部系统、本地 mock。 |
-| Email / SMTP | `smtp://`、`mailto://` | HTML 邮件、图片附件、运维通知。 |
-| 喵提醒 | `miaotixing://` | 个人轻量文本提醒。 |
-| Pushplus | `pushplus://` | 微信消息、Markdown / HTML 推送。 |
-| WxPusher | `wxpusher://` | 微信公众号应用推送、扫码拿 UID。 |
-
-Provider URL 参数和本地测试方式见 `doc/Phase 3 首批 Provider URL 规范.md`。
-
-## 安装与构建
-
-安装依赖：
+## Install
 
 ```bash
-pnpm install
+npm install unicall
 ```
-
-构建 SDK：
 
 ```bash
-pnpm build
+pnpm add unicall
+yarn add unicall
 ```
 
-运行测试和类型检查：
-
-```bash
-pnpm test
-pnpm typecheck
-```
-
-## 快速使用
+## Quick Start
 
 ```ts
 import { createDefaultProviderRegistry, notify } from 'unicall';
@@ -49,8 +35,8 @@ import { createDefaultProviderRegistry, notify } from 'unicall';
 const results = await notify(
   'webhook://127.0.0.1:4317/mock/webhook?scheme=http&method=POST',
   {
-    title: 'Unicall 测试',
-    text: '这是一条本地 Webhook 通知。'
+    title: 'Unicall test',
+    text: 'Hello from Unicall.'
   },
   {
     registry: createDefaultProviderRegistry()
@@ -60,7 +46,9 @@ const results = await notify(
 console.log(results[0]?.success);
 ```
 
-长期复用多个通知目标时，建议使用 `NotificationRuntime`：
+## Runtime Usage
+
+Use `NotificationRuntime` when you need to reuse multiple notification targets and middleware.
 
 ```ts
 import {
@@ -84,43 +72,73 @@ runtime.add([
 ]);
 
 await runtime.send({
-  title: '部署完成',
-  markdown: '## Unicall\n\n生产环境部署完成。'
+  title: 'Deploy finished',
+  markdown: '## Unicall\n\nProduction deployment completed.'
 });
 ```
 
-## 本地配置
+## Supported Providers
 
-真实推送前，先复制配置示例：
-
-```bash
-cp .env.example .env.local
-cp unicall.config.example.mjs unicall.config.local.mjs
-```
-
-Windows PowerShell：
-
-```powershell
-Copy-Item .env.example .env.local
-Copy-Item unicall.config.example.mjs unicall.config.local.mjs
-```
-
-配置文件分工：
-
-| 文件 | 是否提交 Git | 用途 |
+| Provider | Protocol | Use case |
 | :--- | :--- | :--- |
-| `.env.example` | 是 | 环境变量模板。 |
-| `.env.local` | 否 | 本地真实 token、授权码、收件人等敏感值。 |
-| `unicall.config.example.mjs` | 是 | 可提交的渠道结构、profile 和模板示例。 |
-| `unicall.config.local.mjs` | 否 | 本地真实配置结构和自定义模板。 |
+| Webhook | `webhook://` | Self-hosted services, local mocks and backend proxies. |
+| Email / SMTP | `smtp://`、`mailto://` | HTML email, attachments and operations notifications. |
+| 喵提醒 | `miaotixing://` | Lightweight personal text reminders. |
+| Pushplus | `pushplus://` | WeChat notifications with Markdown / HTML content. |
+| WxPusher | `wxpusher://` | WeChat official-account app notifications. |
 
-环境变量只承载真实值，命名遵循：
+Provider URL parameters and local testing details are available in the [Provider docs](https://noblesnowfield.github.io/unicall-doc/providers/webhook).
+
+## Browser Usage
+
+Use the browser ESM entry with a bundler:
+
+```ts
+import { NotificationRuntime } from 'unicall/browser';
+
+const runtime = new NotificationRuntime();
+```
+
+Or use the global build directly in a web page:
+
+```html
+<script src="./dist/unicall.global.js"></script>
+<script>
+  const runtime = new Unicall.NotificationRuntime();
+</script>
+```
+
+The downloadable browser artifacts are:
+
+```text
+dist/browser/index.js     Browser ESM entry
+dist/unicall.browser.mjs  Standalone browser ESM file
+dist/unicall.global.js    Browser <script> global build
+```
+
+## Security Notes
+
+Do not expose server-side secrets such as SMTP password, Pushplus token, WxPusher app token, DingTalk secret, Feishu secret or WeCom webhook key in browser code.
+
+Production browser integrations should use a backend proxy:
+
+```text
+Browser -> your backend /api/notify -> Unicall Runtime -> Provider
+```
+
+Keep real secrets in local files or deployment secret managers, not in committed files, examples, README content or browser bundles.
+
+## Configuration
+
+Unicall recommends using JavaScript configuration files for channel structure, profiles, templates and defaults. Environment variables should only hold real sensitive values.
+
+Environment variable names should follow:
 
 ```text
 UNICALL_<CHANNEL>_<PROFILE>_<FIELD>
 ```
 
-例如：
+Example:
 
 ```dotenv
 UNICALL_PROFILE=default
@@ -129,109 +147,44 @@ UNICALL_EMAIL_DEFAULT_PASS=
 UNICALL_WXPUSHER_DEFAULT_APP_TOKEN=
 ```
 
-不要把真实 token、SMTP 授权码、appToken 写入可提交文件或浏览器代码。
+Recommended local files:
 
-## HTML 模板
+| File | Purpose |
+| :--- | :--- |
+| `.env.example` | Public environment variable template. |
+| `.env.local` | Local real tokens, passwords and recipients. Do not commit. |
+| `unicall.config.example.mjs` | Public channel structure, profile and template example. |
+| `unicall.config.local.mjs` | Local real configuration. Do not commit. |
 
-Unicall 支持统一消息模型中的 `html` 字段。Email 会发送 HTML 邮件，Pushplus 会映射为 `template=html`，WxPusher 会映射为 `contentType=2`，不支持 HTML 的渠道会按能力降级。
+## API
 
-SDK 已提供游戏事件类模板：
+Core exports:
 
-```ts
-import {
-  createGameNotificationEmail,
-  createGameNotificationMessage
-} from 'unicall';
-```
+- `notify`
+- `NotificationRuntime`
+- `ProviderRegistry`
+- `createDefaultProviderRegistry`
+- `parseNotificationUrl`
+- `retryMiddleware`
+- `timeoutMiddleware`
+- `rateLimitMiddleware`
+- `dedupeMiddleware`
+- `metricsMiddleware`
+- `loggingMiddleware`
+- `WebhookProvider`
+- `EmailProvider`
+- `MiaotixingProvider`
+- `PushplusProvider`
+- `WxPusherProvider`
+- `NotificationError`
 
-邮件模板可以携带截图附件或内联图片：
+Browser entry exports the runtime, parser, middleware, provider registry, public types and structured errors, but does not include server-side Provider implementations.
 
-```ts
-const message = createGameNotificationEmail({
-  appName: '通知应用',
-  eventName: '服务提醒',
-  eventTitle: '每日巡检完成',
-  eventDescription: '所有核心接口均通过健康检查。',
-  screenshotUrl: 'https://example.com/report.png',
-  actionUrl: 'https://example.com/report',
-  actionText: '查看报告'
-});
-```
+## Documentation
 
-自定义 HTML 模板建议写成普通函数，最终返回 `NotificationMessage`，不要在模板里读取 Secret 或发送网络请求。
+- [Documentation site](https://noblesnowfield.github.io/unicall-doc/)
+- [Provider docs](https://noblesnowfield.github.io/unicall-doc/providers/webhook)
 
-## 手动推送脚本
+## License
 
-每个 Provider 都有独立手动测试脚本，脚本统一读取 `.env.local` 和 `unicall.config.local.mjs`：
-
-```bash
-pnpm exec tsx scripts/send/webhook.ts --profile default
-pnpm exec tsx scripts/send/email.ts --profile default
-pnpm exec tsx scripts/send/pushplus.ts --profile default
-pnpm exec tsx scripts/send/miaotixing.ts --profile default
-pnpm exec tsx scripts/send/wxpusher.ts --profile default
-```
-
-CI 测试只使用 mock 网络请求，不会真实访问外部通知服务。
-
-## 本地页面测试工具
-
-先构建，再启动页面测试工具：
-
-```bash
-pnpm build
-pnpm run push:ui
-```
-
-浏览器打开：
-
-```text
-http://127.0.0.1:4317
-```
-
-页面会读取 `unicall.config.local.mjs` 和 `.env.local`；如果本地配置文件不存在，会回退到 `unicall.config.example.mjs`。
-
-本地页面测试工具没有热更新。修改源码、模板、配置示例或测试页脚本后，请重新运行：
-
-```bash
-pnpm build
-pnpm run push:ui
-```
-
-然后刷新页面。
-
-## 浏览器接入
-
-构建后会输出浏览器 ESM 和 IIFE 产物，适合无敏感凭据的公开接口或你自己的后端代理：
-
-```text
-dist/browser/index.js       Browser ESM
-dist/browser/index.iife.js  Browser <script>
-```
-
-浏览器端不要暴露企业微信、飞书、钉钉、SMTP、Pushplus、WxPusher 等服务端密钥。推荐链路：
-
-```text
-Browser -> 你的后端 /api/notify -> Unicall Runtime -> Provider
-```
-
-## 文档
-
-文档站项目位于同级目录 `unicall-doc`，基于 VitePress，包含快速开始、接入方式、核心概念、API、消息格式、HTML 模板、Provider 和测试贡献文档。
-
-本地查看文档站：
-
-```bash
-cd ../unicall-doc
-pnpm install
-pnpm docs:dev
-```
-
-## 开发约束
-
-- TypeScript strict。
-- 公共 API 需要保持稳定并补充类型。
-- Provider 不直接依赖其他 Provider。
-- Provider 自动化测试必须 mock 网络请求。
-- 真实推送只通过 `scripts/send/*.ts` 本地手动执行。
-- 新增 Provider 时同步补充模板 demo、测试脚本、配置示例和文档。
+MIT © beichen2023
