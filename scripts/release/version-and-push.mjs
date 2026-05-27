@@ -13,10 +13,17 @@ const allowedBumps = new Set([
 
 const bump = process.argv[2] ?? 'patch';
 
+function resolveCommand(command) {
+  if (process.platform === 'win32' && command === 'npm') {
+    return 'npm.cmd';
+  }
+
+  return command;
+}
+
 function run(command, args, options = {}) {
-  const result = spawnSync(command, args, {
+  const result = spawnSync(resolveCommand(command), args, {
     encoding: 'utf8',
-    shell: process.platform === 'win32',
     stdio: options.capture ? 'pipe' : 'inherit'
   });
 
