@@ -42,6 +42,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Use npm README
+        run: cp README.npm.md README.md
+
       - name: Preview package contents
         run: npm pack --dry-run
 
