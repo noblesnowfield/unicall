@@ -19,18 +19,18 @@ Unicall 是一个 URL 驱动的轻量通知运行时 SDK，面向 Node.js / Type
 ## Install
 
 ```bash
-npm install unicall
+npm install @mzh/unicall
 ```
 
 ```bash
-pnpm add unicall
-yarn add unicall
+pnpm add @mzh/unicall
+yarn add @mzh/unicall
 ```
 
 ## Quick Start
 
 ```ts
-import { createDefaultProviderRegistry, notify } from 'unicall';
+import { createDefaultProviderRegistry, notify } from '@mzh/unicall';
 
 const results = await notify(
   'webhook://127.0.0.1:4317/mock/webhook?scheme=http&method=POST',
@@ -56,7 +56,7 @@ import {
   createDefaultProviderRegistry,
   retryMiddleware,
   timeoutMiddleware
-} from 'unicall';
+} from '@mzh/unicall';
 
 const runtime = new NotificationRuntime({
   registry: createDefaultProviderRegistry(),
@@ -94,7 +94,7 @@ Provider URL parameters and local testing details are available in the [Provider
 Use the browser ESM entry with a bundler:
 
 ```ts
-import { NotificationRuntime } from 'unicall/browser';
+import { NotificationRuntime } from '@mzh/unicall/browser';
 
 const runtime = new NotificationRuntime();
 ```

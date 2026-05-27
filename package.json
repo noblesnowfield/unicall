@@ -1,10 +1,22 @@
 {
-  "name": "unicall",
+  "name": "@mzh/unicall",
   "version": "0.1.0",
   "description": "URL-driven notification runtime for Node.js and browser integrations.",
   "type": "module",
   "author": "beichen2023",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noblesnowfield/unicall.git"
+  },
+  "homepage": "https://github.com/noblesnowfield/unicall#readme",
+  "bugs": {
+    "url": "https://github.com/noblesnowfield/unicall/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "sideEffects": false,
   "bin": {
     "unicall": "./dist/cli.js"
