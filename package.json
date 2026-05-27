@@ -1,5 +1,5 @@
 {
-  "name": "@mzh/unicall",
+  "name": "@noblesnowfield/unicall",
   "version": "0.1.0",
   "description": "URL-driven notification runtime for Node.js and browser integrations.",
   "type": "module",
