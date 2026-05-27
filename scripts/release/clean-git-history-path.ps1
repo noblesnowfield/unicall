@@ -1,5 +1,6 @@
 ﻿param(
   [string]$ProjectName = "",
+  [string]$ConfirmProjectName = "",
   [string]$CleanPath = "doc/",
   [string]$IgnorePattern = "",
   [string]$RemoteName = "origin",
@@ -101,7 +102,11 @@ function Invoke-FilterRepo {
   param([Parameter(Mandatory = $true)][string[]]$FilterArgs)
 
   if ($script:FilterRepoMode -eq "git") {
-    Invoke-Git @(@("filter-repo") + $FilterArgs)
+    $gitArgs = @("filter-repo") + $FilterArgs
+    & git @gitArgs
+    if ($LASTEXITCODE -ne 0) {
+      throw "git 命令执行失败：git $($gitArgs -join ' ')"
+    }
     return
   }
 
@@ -152,7 +157,12 @@ Write-Host "项目名字：$ProjectName"
 Write-Host "清理路径：$CleanPath"
 Write-Host "忽略规则：$IgnorePattern"
 
-$confirmProject = Read-Host "这个操作会重写历史。请再次输入项目名字确认"
+if ([string]::IsNullOrWhiteSpace($ConfirmProjectName)) {
+  $confirmProject = Read-Host "这个操作会重写历史。请再次输入项目名字确认"
+} else {
+  $confirmProject = $ConfirmProjectName
+}
+
 if ($confirmProject -ne $ProjectName) {
   Write-Host "确认项目名不一致，已取消。"
   exit 0
