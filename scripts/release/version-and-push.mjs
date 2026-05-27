@@ -69,6 +69,14 @@ function getCurrentBranch() {
   return branch;
 }
 
+function ensureTagDoesNotExist(tagName) {
+  const localTag = run('git', ['tag', '--list', tagName], { capture: true });
+
+  if (localTag.length > 0) {
+    throw new Error(`本地 tag 已存在: ${tagName}`);
+  }
+}
+
 function main() {
   ensureValidBump();
   ensureCleanWorktree();
@@ -78,10 +86,16 @@ function main() {
 
   console.log(`[release] 当前版本: ${beforeVersion}`);
   console.log(`[release] 升级类型: ${bump}`);
-  run('npm', ['version', bump, '-m', 'chore: 发布版本 %s']);
+  run('npm', ['version', bump, '--no-git-tag-version']);
 
   const nextVersion = readPackageVersion();
   const tagName = `v${nextVersion}`;
+  ensureTagDoesNotExist(tagName);
+
+  console.log(`[release] 提交版本文件: ${nextVersion}`);
+  run('git', ['add', 'package.json', 'pnpm-lock.yaml']);
+  run('git', ['commit', '-m', `chore: 发布版本 ${nextVersion}`]);
+  run('git', ['tag', tagName]);
 
   console.log(`[release] 新版本: ${nextVersion}`);
   console.log(`[release] 推送分支: ${branch}`);
