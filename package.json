@@ -41,6 +41,10 @@
   "scripts": {
     "build": "node scripts/release/clean-dist.mjs && tsup && node scripts/release/generate-checksums.mjs && node scripts/release/verify-browser-assets.mjs",
     "release:assets": "pnpm build",
+    "release:patch": "node scripts/release/version-and-push.mjs patch",
+    "release:minor": "node scripts/release/version-and-push.mjs minor",
+    "release:major": "node scripts/release/version-and-push.mjs major",
+    "release:version": "node scripts/release/version-and-push.mjs",
     "push:ui": "node scripts/ui/test-push-server.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
