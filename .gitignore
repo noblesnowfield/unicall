@@ -9,3 +9,4 @@ coverage/
 unicall.config.local.*
 unicall.secrets.local.*
 /.idea
+doc/
