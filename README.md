@@ -2,6 +2,8 @@
 
 URL-driven notification runtime for Node.js and TypeScript.
 
+**Documentation:** [https://noblesnowfield.github.io/unicall-doc/](https://noblesnowfield.github.io/unicall-doc/)
+
 Unicall 是一个 URL 驱动的轻量通知运行时 SDK，面向 Node.js / TypeScript 项目，提供 Provider 插件、中间件管线、统一消息模型、结构化错误和浏览器友好的构建产物。
 
 它可以通过 `webhook://`、`smtp://`、`pushplus://`、`miaotixing://`、`wxpusher://` 等 Provider URL 发送通知，并支持在生产浏览器场景中通过后端代理安全接入。
