@@ -967,12 +967,23 @@ function renderPage() {
         const options = channels.filter(channel => channel !== 'webhook').map(channel => '<option value="'+channel+'" '+(selected.includes(channel)?'selected':'')+'>'+channel+'</option>').join('');
         return '<div class="field full"><label>聚合转发渠道</label><select data-kind="value" data-field="webhookTargets" multiple size="4">'+options+'</select><span class="hint">可多选。选择后点击发送会调用本地 /api/notify，一次触发这些渠道；不选择则只测试普通 Webhook POST。</span></div>';
       }
+      if(active === 'pushplus' && field === 'template'){
+        const current = typeof value === 'string' ? value : '';
+        const templates = [
+          ['', '自动'],
+          ['html', 'HTML'],
+          ['markdown', 'Markdown'],
+          ['txt', '纯文本']
+        ];
+        const options = templates.map(([template,label]) => '<option value="'+template+'" '+(template===current?'selected':'')+'>'+label+'</option>').join('');
+        return '<div class="field"><label>template</label><select data-kind="value" data-field="template">'+options+'</select>'+renderConfigHint(field)+'</div>';
+      }
       const display = normalizeValue(value);
       return '<div class="field '+(field==='to'||field==='url'||field==='appQrCodeUrl'||field==='qrCodeUrl'||field==='subscribeUrl'||field==='callbackUrl'?'full':'')+'"><label>'+field+'</label><input data-kind="value" data-field="'+field+'" type="text" placeholder="'+display.placeholder+'" value="'+display.value+'">'+renderConfigHint(field)+'</div>';
     }
     function renderConfigHint(field){
       const hints = {
-        template: active === 'pushplus' ? 'Pushplus 内容模板，可填 markdown/html/txt；发送 HTML 消息时建议设为 html。' : '',
+        template: active === 'pushplus' ? 'Pushplus 接口模板。选择“自动”时按消息正文类型发送，HTML 消息会自动使用 html。' : '',
         appQrCodeUrl: '选填：应用二维码图片地址；用户扫码关注应用后，WxPusher 会向后台回调 UID。',
         qrCodeUrl: '选填：已有应用二维码或主题二维码图片地址，填写后这里直接展示。',
         subscribeUrl: '选填：已有应用或主题订阅链接。',
