@@ -152,7 +152,9 @@ export async function createWxPusherQrCode(
     'qrCodeUrl',
     'qrcodeUrl',
     'qrCodeImgUrl',
-    'imgUrl'
+    'imgUrl',
+    'shortUrl',
+    'url'
   ]);
   const url = readString(payload.data, ['url', 'shortUrl']);
 
@@ -180,7 +182,9 @@ export async function queryWxPusherQrCodeUid(
   const raw = await readResponseBody(response);
   const payload = normalizeWxPusherApiResponse(raw);
 
-  assertWxPusherApiSuccess(response, payload, raw);
+  if (!isPendingQrCodeUidResponse(payload)) {
+    assertWxPusherApiSuccess(response, payload, raw);
+  }
 
   const uid = readString(payload.data, ['uid']);
 
@@ -188,6 +192,10 @@ export async function queryWxPusherQrCodeUid(
     ...(uid ? { uid } : {}),
     raw
   };
+}
+
+function isPendingQrCodeUidResponse(payload: WxPusherApiResponse): boolean {
+  return payload.code === 1001 && payload.msg === '暂无用户扫描二维码';
 }
 
 /**

@@ -121,7 +121,7 @@ const server = createServer(async (request, response) => {
       response,
       {
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: normalizeThrownError(error)
       },
       500
     );
@@ -732,7 +732,12 @@ function normalizeThrownError(error) {
   if (error instanceof Error) {
     return {
       name: error.name,
-      message: error.message
+      message: error.message,
+      code: error.code,
+      provider: error.provider,
+      protocol: error.protocol,
+      retryable: error.retryable,
+      cause: normalizeErrorCause(error.cause)
     };
   }
 

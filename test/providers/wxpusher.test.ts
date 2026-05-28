@@ -72,7 +72,7 @@ describe('WxPusherProvider', () => {
           code: 1000,
           data: {
             code: 'QR_CODE',
-            qrCodeUrl: 'https://wxpusher.example/qrcode.jpg',
+            shortUrl: 'https://wxpusher.example/qrcode.jpg',
             url: 'https://wxpusher.example/subscribe'
           }
         }),
@@ -99,7 +99,7 @@ describe('WxPusherProvider', () => {
         code: 1000,
         data: {
           code: 'QR_CODE',
-          qrCodeUrl: 'https://wxpusher.example/qrcode.jpg',
+          shortUrl: 'https://wxpusher.example/qrcode.jpg',
           url: 'https://wxpusher.example/subscribe'
         }
       }
@@ -147,17 +147,56 @@ describe('WxPusherProvider', () => {
     );
   });
 
+  it('查询参数二维码未扫码时返回空 UID 而不是失败', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: 1001,
+          msg: '暂无用户扫描二维码',
+          data: null,
+          success: false
+        }),
+        {
+          status: 200,
+          headers: {
+            'content-type': 'application/json'
+          }
+        }
+      )
+    );
+
+    const result = await queryWxPusherQrCodeUid({ code: 'QR_CODE' });
+
+    expect(result).toEqual({
+      raw: {
+        code: 1001,
+        msg: '暂无用户扫描二维码',
+        data: null,
+        success: false
+      }
+    });
+  });
+
   it('按官方最小间隔轮询参数二维码扫码 UID', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('fetch', fetchMock);
     fetchMock
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ code: 1000, data: {} }), {
-          status: 200,
-          headers: {
-            'content-type': 'application/json'
+        new Response(
+          JSON.stringify({
+            code: 1001,
+            msg: '暂无用户扫描二维码',
+            data: null,
+            success: false
+          }),
+          {
+            status: 200,
+            headers: {
+              'content-type': 'application/json'
+            }
           }
-        })
+        )
       )
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ code: 1000, data: { uid: 'UID_SCAN' } }), {
