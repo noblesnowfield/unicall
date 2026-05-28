@@ -852,7 +852,7 @@ function renderPage() {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Unicall 推送测试</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;background:#f6f8fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.app{max-width:1180px;margin:0 auto;padding:28px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:20px}.title h1{margin:0 0 8px;font-size:26px}.title p{margin:0;color:#64748b}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tab{border:1px solid #d7deea;background:#fff;border-radius:7px;padding:10px 14px;cursor:pointer;font-weight:700;color:#334155}.tab.active{background:#1f5eff;color:#fff;border-color:#1f5eff}.panel{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:#fff;border:1px solid #e0e6ef;border-radius:8px;padding:18px}.card h2{font-size:16px;margin:0 0 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}label{font-size:13px;font-weight:700;color:#334155}input,select,textarea{width:100%;border:1px solid #cfd8e6;border-radius:6px;padding:10px 11px;font:inherit;background:#fff}textarea{min-height:88px;resize:vertical}.hint{font-size:12px;color:#64748b}.secret{color:#8a5a00}.actions{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}.btn{border:0;border-radius:6px;background:#1f5eff;color:#fff;padding:11px 18px;font-weight:800;cursor:pointer}.btn.secondary{background:#e8eef8;color:#1e293b}.status{white-space:pre-wrap;background:#0f172a;color:#dbeafe;border-radius:8px;padding:14px;min-height:90px;overflow:auto}.preview{width:100%;border:1px solid #e0e6ef;border-radius:8px}.qrbox{display:grid;grid-template-columns:180px 1fr;gap:14px;align-items:start}.qrbox img{width:180px;height:180px;object-fit:contain;border:1px solid #d7deea;border-radius:8px;background:#fff}.qr-placeholder{width:180px;height:180px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed #cbd5e1;border-radius:8px;color:#64748b;background:#f8fafc}.note{padding:12px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin-bottom:12px}@media(max-width:900px){.panel{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.top{display:block}.qrbox{grid-template-columns:1fr}.qrbox img,.qr-placeholder{width:100%;height:auto;min-height:180px}}
+    *{box-sizing:border-box}body{margin:0;background:#f6f8fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.app{max-width:1180px;margin:0 auto;padding:28px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:20px}.title h1{margin:0 0 8px;font-size:26px}.title p{margin:0;color:#64748b}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tab{border:1px solid #d7deea;background:#fff;border-radius:7px;padding:10px 14px;cursor:pointer;font-weight:700;color:#334155}.tab.active{background:#1f5eff;color:#fff;border-color:#1f5eff}.panel{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:#fff;border:1px solid #e0e6ef;border-radius:8px;padding:18px}.card h2{font-size:16px;margin:0 0 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}label{font-size:13px;font-weight:700;color:#334155}input,select,textarea{width:100%;border:1px solid #cfd8e6;border-radius:6px;padding:10px 11px;font:inherit;background:#fff}textarea{min-height:88px;resize:vertical}.hint{font-size:12px;color:#64748b}.secret{color:#8a5a00}.actions{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}.btn{border:0;border-radius:6px;background:#1f5eff;color:#fff;padding:11px 18px;font-weight:800;cursor:pointer}.btn.secondary{background:#e8eef8;color:#1e293b}.btn.ghost{background:#fff;color:#334155;border:1px solid #cfd8e6}.status{white-space:pre-wrap;background:#0f172a;color:#dbeafe;border-radius:8px;padding:14px;min-height:90px;overflow:auto}.preview{width:100%;border:1px solid #e0e6ef;border-radius:8px}.qrbox{display:grid;grid-template-columns:180px 1fr;gap:14px;align-items:start}.qrbox img{width:180px;height:180px;object-fit:contain;border:1px solid #d7deea;border-radius:8px;background:#fff}.qr-placeholder{width:180px;height:180px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed #cbd5e1;border-radius:8px;color:#64748b;background:#f8fafc}.note{padding:12px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin-bottom:12px}.bind-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.bind-mode{border:1px solid #d7deea;border-radius:8px;padding:14px;background:#fbfdff}.bind-mode h3{font-size:14px;margin:0 0 8px}.bind-mode.active{border-color:#1f5eff;background:#f6f9ff}.bind-meta{display:grid;gap:6px;margin-top:10px}.bind-success{color:#16a34a;font-weight:800}.bind-warning{color:#b45309;font-weight:800}@media(max-width:900px){.panel{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.top{display:block}.qrbox,.bind-grid{grid-template-columns:1fr}.qrbox img,.qr-placeholder{width:100%;height:auto;min-height:180px}}
   </style>
 </head>
 <body>
@@ -909,6 +909,8 @@ function renderPage() {
     let selectedProfiles = {};
     let wxpusherQrState = {};
     let wxpusherCallbackTimer = 0;
+    let wxpusherUidPollTimer = 0;
+    let wxpusherUidPollAttempt = 0;
     const emailHtmlTemplates = {
       gameNotification: '游戏通知模板',
       rawHtml: '自定义 HTML'
@@ -1130,10 +1132,18 @@ function renderPage() {
         if(input) input.oninput = () => renderWxPusherQrPanel({...collect('value'), ...wxpusherQrState});
       });
     }
+    function fillWxPusherUid(uid, source){
+      if(!uid) return;
+      const input = document.querySelector('[data-kind="value"][data-field="uids"]');
+      if(input) input.value = uid;
+      const status = document.getElementById('wxpusherBindResult');
+      if(status) status.innerHTML = '<span class="bind-success">已获取 UID 并回填到 uids：</span>'+escapeHtml(uid)+'\\n来源：'+escapeHtml(source);
+    }
     function renderWxPusherQrPanel(values){
       const card = document.getElementById('wxpusherQrCard');
       if(active !== 'wxpusher'){
         card.hidden = true;
+        stopWxPusherUidPolling();
         return;
       }
       card.hidden = false;
@@ -1142,12 +1152,43 @@ function renderPage() {
       const configuredCallbackUrl = values.callbackUrl || '';
       const localCallbackUrl = location.origin + '/api/wxpusher/callback';
       const code = wxpusherQrState.code || '';
-      const image = qrCodeUrl ? '<img src="'+qrCodeUrl+'" alt="WxPusher 二维码">' : '<div class="qr-placeholder">填写二维码图片地址<br>或生成临时二维码</div>';
-      document.getElementById('wxpusherQrPanel').innerHTML = '<div class="qrbox">'+image+'<div><div class="hint">用于让用户扫码关注应用或主题。没有公网回调服务时，先生成参数二维码，再让 SDK 按官方要求每 10 秒查询一次 code 对应的扫码 UID。</div><div class="actions"><button class="btn secondary" id="createWxPusherQr">生成临时二维码</button><button class="btn secondary" id="waitWxPusherUid">等待扫码 UID</button><button class="btn secondary" id="queryWxPusherUid">查询一次 UID</button><button class="btn secondary" id="refreshWxPusherCallbacks">刷新回调</button></div><div class="hint">本地回调接收地址：'+localCallbackUrl+'</div>'+(configuredCallbackUrl ? '<div class="hint">当前配置回调地址：'+configuredCallbackUrl+'</div>' : '')+'<div class="hint">二维码 code：'+(code || '暂无')+'</div>'+(subscribeUrl ? '<div class="hint">订阅链接：<a href="'+subscribeUrl+'" target="_blank" rel="noreferrer">'+subscribeUrl+'</a></div>' : '')+'<div class="status" id="wxpusherQrStatus">等待操作...</div><div class="status" id="wxpusherCallbackStatus">等待回调...</div></div></div>';
-      document.getElementById('createWxPusherQr').onclick = createWxPusherQr;
-      document.getElementById('waitWxPusherUid').onclick = waitWxPusherUid;
-      document.getElementById('queryWxPusherUid').onclick = queryWxPusherUid;
-      document.getElementById('refreshWxPusherCallbacks').onclick = loadWxPusherCallbacks;
+      const image = qrCodeUrl ? '<img src="'+escapeHtml(qrCodeUrl)+'" alt="WxPusher 二维码">' : '<div class="qr-placeholder">点击开始绑定<br>自动生成临时二维码</div>';
+      document.getElementById('wxpusherQrPanel').innerHTML =
+        '<div class="bind-grid">' +
+          '<div class="bind-mode active">' +
+            '<h3>不搭服务器：参数二维码轮询</h3>' +
+            '<div class="hint">点击一次即可。页面会创建临时二维码，用户扫码后自动每 10 秒查询 UID，并回填到 uids。</div>' +
+            '<div class="qrbox" style="margin-top:12px">'+image+'<div>' +
+              '<div class="actions"><button class="btn" id="startWxPusherPolling">开始扫码绑定</button><button class="btn ghost" id="stopWxPusherPolling">停止轮询</button></div>' +
+              '<div class="bind-meta"><span class="hint">二维码 code：'+escapeHtml(code || '暂无')+'</span>' +
+              (subscribeUrl ? '<span class="hint">临时二维码链接：<a href="'+escapeHtml(subscribeUrl)+'" target="_blank" rel="noreferrer">'+escapeHtml(subscribeUrl)+'</a></span>' : '') +
+              '</div><div class="status" id="wxpusherQrStatus">等待开始...</div></div></div>' +
+          '</div>' +
+          '<div class="bind-mode">' +
+            '<h3>搭服务器：公网回调</h3>' +
+            '<div class="hint">需要把 WxPusher 后台回调地址配置成公网可访问的 HTTPS 地址，并转发到本地 /api/wxpusher/callback。页面会自动监听回调并回填 UID。</div>' +
+            '<div class="bind-meta">' +
+              '<span class="hint">本地回调接收地址：'+escapeHtml(localCallbackUrl)+'</span>' +
+              (configuredCallbackUrl ? '<span class="hint">当前配置回调地址：'+escapeHtml(configuredCallbackUrl)+'</span>' : '<span class="hint">当前配置回调地址：未填写</span>') +
+            '</div>' +
+            '<div class="status" id="wxpusherCallbackStatus">等待回调...</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="status" id="wxpusherBindResult" style="margin-top:14px">UID 获取结果会自动显示在这里，并同步回填到上方 uids。</div>';
+      document.getElementById('startWxPusherPolling').onclick = startWxPusherNoServerBinding;
+      document.getElementById('stopWxPusherPolling').onclick = () => {
+        stopWxPusherUidPolling();
+        const status = document.getElementById('wxpusherQrStatus');
+        if(status) status.textContent = '已停止轮询。';
+      };
+    }
+    async function startWxPusherNoServerBinding(){
+      stopWxPusherUidPolling();
+      await createWxPusherQr();
+      if(wxpusherQrState.code){
+        wxpusherUidPollAttempt = 0;
+        pollWxPusherUid();
+      }
     }
     async function createWxPusherQr(){
       document.getElementById('wxpusherQrStatus').textContent = '生成中...';
@@ -1160,40 +1201,36 @@ function renderPage() {
         if(qrInput && body.qrCodeUrl) qrInput.value = body.qrCodeUrl;
         if(subscribeInput && body.url) subscribeInput.value = body.url;
         renderWxPusherQrPanel({...collect('value'), ...body});
-        document.getElementById('wxpusherQrStatus').textContent = JSON.stringify(body, null, 2);
+        document.getElementById('wxpusherQrStatus').textContent = '临时二维码已生成，请扫码。\\n' + JSON.stringify(body, null, 2);
         return;
       }
       document.getElementById('wxpusherQrStatus').textContent = JSON.stringify(body, null, 2);
     }
-    async function waitWxPusherUid(){
+    async function pollWxPusherUid(){
       if(!wxpusherQrState.code){
-        document.getElementById('wxpusherQrStatus').textContent = '请先生成临时二维码，再等待扫码 UID。';
+        document.getElementById('wxpusherQrStatus').textContent = '请先开始扫码绑定，页面会自动生成临时二维码。';
         return;
       }
-      document.getElementById('wxpusherQrStatus').textContent = '等待扫码中...SDK 会按官方要求每 10 秒查询一次，最长等待 2 分钟。';
-      const res = await fetch('/api/wxpusher/qrcode/wait', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({code:wxpusherQrState.code, timeoutMs:120000})});
-      const body = await res.json();
-      if(body.uid){
-        const input = document.querySelector('[data-kind="value"][data-field="uids"]');
-        if(input) input.value = body.uid;
-      }
-      document.getElementById('wxpusherQrStatus').textContent = body.timedOut && !body.uid
-        ? '等待超时，暂未查询到 UID。请确认已经扫码关注，或稍后点击“查询一次 UID”。\\n' + JSON.stringify(body, null, 2)
-        : JSON.stringify(body, null, 2);
-    }
-    async function queryWxPusherUid(){
-      if(!wxpusherQrState.code){
-        document.getElementById('wxpusherQrStatus').textContent = '请先生成临时二维码，再查询扫码 UID。';
-        return;
-      }
-      document.getElementById('wxpusherQrStatus').textContent = '查询中...';
+      wxpusherUidPollAttempt += 1;
+      const status = document.getElementById('wxpusherQrStatus');
+      if(status) status.textContent = '正在查询扫码 UID，第 '+wxpusherUidPollAttempt+' 次。未扫码时会每 10 秒自动继续。';
       const res = await fetch('/api/wxpusher/qrcode/uid', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({code:wxpusherQrState.code})});
       const body = await res.json();
       if(body.uid){
-        const input = document.querySelector('[data-kind="value"][data-field="uids"]');
-        if(input) input.value = body.uid;
+        stopWxPusherUidPolling();
+        fillWxPusherUid(body.uid, '参数二维码轮询');
+        if(status) status.textContent = JSON.stringify(body, null, 2);
+        return;
       }
-      document.getElementById('wxpusherQrStatus').textContent = JSON.stringify(body, null, 2);
+      const pending = body.raw?.code === 1001 || body.error?.cause?.code === 1001;
+      if(status) status.textContent = (pending ? '暂未扫码，10 秒后自动重试。\\n' : '暂未拿到 UID，10 秒后自动重试。\\n') + JSON.stringify(body, null, 2);
+      wxpusherUidPollTimer = setTimeout(pollWxPusherUid, 10000);
+    }
+    function stopWxPusherUidPolling(){
+      if(wxpusherUidPollTimer){
+        clearTimeout(wxpusherUidPollTimer);
+        wxpusherUidPollTimer = 0;
+      }
     }
     function setupWxPusherCallbackPolling(){
       if(wxpusherCallbackTimer){
@@ -1216,8 +1253,7 @@ function renderPage() {
       }
       const latest = callbacks[0];
       if(latest?.event?.uid){
-        const input = document.querySelector('[data-kind="value"][data-field="uids"]');
-        if(input) input.value = latest.event.uid;
+        fillWxPusherUid(latest.event.uid, '公网回调');
       }
       target.innerHTML = callbacks.map(item => escapeHtml(JSON.stringify(item, null, 2))).join('\\n\\n');
     }

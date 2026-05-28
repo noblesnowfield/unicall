@@ -93,9 +93,12 @@ Provider URL parameters and local testing details are available in the [Provider
 
 ## WxPusher Local UID Binding
 
-For local development without a public callback server, use the official WxPusher parameter QR-code flow: call `createWxPusherQrCode`, show the returned QR code, then call `waitForWxPusherQrCodeUid`. Unicall enforces WxPusher's 10-second minimum polling interval and returns the scanned `UID_xxx` when available.
+There are two supported UID binding flows:
 
-The bundled local test page wires this through the SDK. Run `pnpm build` and `pnpm run push:ui`, open `http://127.0.0.1:4317`, switch to `wxpusher`, generate a temporary QR code, then wait for the UID. Callback mode also works, but `localhost` must be exposed through a public HTTPS tunnel before WxPusher can call `/api/wxpusher/callback`.
+- Without a server: use the official WxPusher parameter QR-code flow. `createWxPusherQrCode` creates the temporary QR code, and `waitForWxPusherQrCodeUid` polls every 10 seconds until `UID_xxx` is available.
+- With a server: expose a public HTTPS callback endpoint and parse WxPusher callback payloads with `parseWxPusherCallback`.
+
+The bundled local test page wires both flows through the SDK. Run `pnpm build` and `pnpm run push:ui`, open `http://127.0.0.1:4317`, switch to `wxpusher`, then click `开始扫码绑定` for the no-server flow. The page creates the temporary QR code, starts polling automatically, and writes the UID back into `uids`. Callback mode also works, but `localhost` must be exposed through a public HTTPS tunnel before WxPusher can call `/api/wxpusher/callback`.
 
 ## Browser Usage
 

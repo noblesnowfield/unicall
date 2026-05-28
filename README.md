@@ -154,7 +154,10 @@ Browser -> 你的后端 /api/notify -> Unicall Runtime -> Provider
 
 ## WxPusher 本地扫码绑定
 
-没有自己的公网服务器时，可以用 WxPusher 官方的参数二维码流程获取用户 UID：先调用 `createWxPusherQrCode` 创建二维码并展示给用户扫码，再用 `waitForWxPusherQrCodeUid` 按官方要求每 10 秒轮询一次扫码结果。拿到 `UID_xxx` 后，把它填入 `wxpusher://AT_xxx?uids=UID_xxx` 即可发送测试推送。
+WxPusher 获取用户 UID 有两条链路：
+
+- 不搭服务器：使用官方参数二维码。调用 `createWxPusherQrCode` 创建临时二维码，用户扫码后用 `waitForWxPusherQrCodeUid` 按官方要求每 10 秒轮询一次扫码结果，拿到 `UID_xxx` 后填入 `wxpusher://AT_xxx?uids=UID_xxx`。
+- 搭服务器：在 WxPusher 后台配置公网 HTTPS 回调地址。用户扫码关注应用后，WxPusher 主动回调你的服务，服务端用 `parseWxPusherCallback` 解析并保存 UID。
 
 ```ts
 import {
@@ -184,7 +187,7 @@ if (bindResult.uid) {
 }
 ```
 
-本地页面已经集成这条链路：运行 `pnpm build` 后执行 `pnpm run push:ui`，打开 `http://127.0.0.1:4317`，切到 `wxpusher`，填写 `appToken` 后点击“生成临时二维码”和“等待扫码 UID”。如果你使用回调方式，本地 `localhost` 不能被 WxPusher 直接访问，需要用 ngrok、cloudflared、frp 等公网隧道把 `/api/wxpusher/callback` 暴露成 HTTPS 地址。
+本地页面已经集成两种方式：运行 `pnpm build` 后执行 `pnpm run push:ui`，打开 `http://127.0.0.1:4317`，切到 `wxpusher`。不搭服务器时点击“开始扫码绑定”，页面会自动创建临时二维码、开始轮询并把拿到的 UID 回填到 `uids`。如果你使用回调方式，本地 `localhost` 不能被 WxPusher 直接访问，需要用 ngrok、cloudflared、frp 等公网隧道把 `/api/wxpusher/callback` 暴露成 HTTPS 地址；测试页会自动监听回调并回填 UID。
 
 ## 配置约定
 
