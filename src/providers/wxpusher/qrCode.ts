@@ -7,6 +7,8 @@ const defaultCreateQrCodeEndpoint =
   'https://wxpusher.zjiecode.com/api/fun/create/qrcode';
 const defaultQueryQrCodeUidEndpoint =
   'https://wxpusher.zjiecode.com/api/fun/scan-qrcode-uid';
+const defaultQrCodeUidPollingIntervalMs = 10_000;
+const defaultQrCodeUidPollingTimeoutMs = 120_000;
 
 export interface CreateWxPusherQrCodeOptions {
   /** WxPusher 应用 appToken，用于创建参数二维码。 */
@@ -46,6 +48,22 @@ export interface WxPusherQrCodeUidResult {
   readonly uid?: string;
   /** WxPusher 原始响应。 */
   readonly raw: unknown;
+}
+
+export interface WaitForWxPusherQrCodeUidOptions
+  extends QueryWxPusherQrCodeUidOptions {
+  /** 轮询间隔，单位毫秒；会按 WxPusher 官方要求钳制到至少 10000ms。 */
+  readonly intervalMs?: number;
+  /** 最长等待时间，单位毫秒；默认 120000ms。 */
+  readonly timeoutMs?: number;
+}
+
+export interface WaitForWxPusherQrCodeUidResult
+  extends WxPusherQrCodeUidResult {
+  /** 实际查询次数。 */
+  readonly attempts: number;
+  /** 是否因为超时结束且没有拿到 UID。 */
+  readonly timedOut: boolean;
 }
 
 export interface WxPusherCallbackEvent {
@@ -172,6 +190,53 @@ export async function queryWxPusherQrCodeUid(
   };
 }
 
+/**
+ * 按 WxPusher 官方建议轮询参数二维码扫码结果，适合没有公网回调服务的本地工具或桌面端。
+ */
+export async function waitForWxPusherQrCodeUid(
+  options: WaitForWxPusherQrCodeUidOptions
+): Promise<WaitForWxPusherQrCodeUidResult> {
+  const intervalMs = Math.max(
+    normalizePositiveNumber(options.intervalMs, defaultQrCodeUidPollingIntervalMs),
+    defaultQrCodeUidPollingIntervalMs
+  );
+  const timeoutMs = normalizePositiveNumber(
+    options.timeoutMs,
+    defaultQrCodeUidPollingTimeoutMs
+  );
+  const startAt = Date.now();
+  let attempts = 0;
+  let latestRaw: unknown;
+
+  while (Date.now() - startAt <= timeoutMs) {
+    const result = await queryWxPusherQrCodeUid(options);
+    attempts += 1;
+    latestRaw = result.raw;
+
+    if (result.uid) {
+      return {
+        ...result,
+        attempts,
+        timedOut: false
+      };
+    }
+
+    const remainingMs = timeoutMs - (Date.now() - startAt);
+
+    if (remainingMs < intervalMs) {
+      break;
+    }
+
+    await wait(intervalMs, options.signal);
+  }
+
+  return {
+    raw: latestRaw,
+    attempts,
+    timedOut: true
+  };
+}
+
 function assertWxPusherApiSuccess(
   response: Response,
   payload: WxPusherApiResponse,
@@ -250,4 +315,49 @@ function readRecordNumber(
   const value = record[key];
 
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function normalizePositiveNumber(value: number | undefined, fallback: number): number {
+  return value !== undefined && Number.isFinite(value) && value > 0
+    ? value
+    : fallback;
+}
+
+function wait(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  if (signal?.aborted) {
+    return Promise.reject(createAbortError(signal));
+  }
+
+  return new Promise((resolve, reject) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cleanup = () => {
+      if (timer !== undefined) {
+        clearTimeout(timer);
+      }
+
+      signal?.removeEventListener('abort', onAbort);
+    };
+    const onAbort = () => {
+      cleanup();
+      reject(signal ? createAbortError(signal) : new Error('WxPusher polling aborted'));
+    };
+
+    timer = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function createAbortError(signal: AbortSignal): Error {
+  if (signal.reason instanceof Error) {
+    return signal.reason;
+  }
+
+  return new Error(
+    typeof signal.reason === 'string'
+      ? signal.reason
+      : 'WxPusher QR code UID polling aborted'
+  );
 }

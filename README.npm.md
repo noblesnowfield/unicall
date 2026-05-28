@@ -91,6 +91,12 @@ await runtime.send({
 
 Provider URL parameters and local testing details are available in the [Provider docs](https://noblesnowfield.github.io/unicall-doc/providers/webhook).
 
+## WxPusher Local UID Binding
+
+For local development without a public callback server, use the official WxPusher parameter QR-code flow: call `createWxPusherQrCode`, show the returned QR code, then call `waitForWxPusherQrCodeUid`. Unicall enforces WxPusher's 10-second minimum polling interval and returns the scanned `UID_xxx` when available.
+
+The bundled local test page wires this through the SDK. Run `pnpm build` and `pnpm run push:ui`, open `http://127.0.0.1:4317`, switch to `wxpusher`, generate a temporary QR code, then wait for the UID. Callback mode also works, but `localhost` must be exposed through a public HTTPS tunnel before WxPusher can call `/api/wxpusher/callback`.
+
 ## Browser Usage
 
 Use the browser ESM entry with a bundler:

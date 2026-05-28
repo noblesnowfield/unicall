@@ -42,6 +42,7 @@ export {
   webhookProviderFactory,
   WxPusherProvider,
   queryWxPusherQrCodeUid,
+  waitForWxPusherQrCodeUid,
   wxPusherProviderFactory
 } from './providers';
 export {
@@ -55,6 +56,8 @@ export type { GameNotificationTemplateOptions } from './templates';
 export type {
   CreateWxPusherQrCodeOptions,
   QueryWxPusherQrCodeUidOptions,
+  WaitForWxPusherQrCodeUidOptions,
+  WaitForWxPusherQrCodeUidResult,
   WxPusherCallbackEvent,
   WxPusherQrCodeResult,
   WxPusherQrCodeUidResult

@@ -6,6 +6,7 @@ import {
   parseWxPusherCallback,
   ProviderRegistry,
   queryWxPusherQrCodeUid,
+  waitForWxPusherQrCodeUid,
   wxPusherProviderFactory
 } from '../../src';
 
@@ -13,6 +14,7 @@ const fetchMock = vi.fn<Parameters<typeof fetch>, ReturnType<typeof fetch>>();
 
 describe('WxPusherProvider', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
     fetchMock.mockReset();
   });
@@ -143,6 +145,55 @@ describe('WxPusherProvider', () => {
         method: 'GET'
       })
     );
+  });
+
+  it('按官方最小间隔轮询参数二维码扫码 UID', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: 1000, data: {} }), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json'
+          }
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: 1000, data: { uid: 'UID_SCAN' } }), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json'
+          }
+        })
+      );
+
+    const resultPromise = waitForWxPusherQrCodeUid({
+      code: 'QR_CODE',
+      intervalMs: 1,
+      timeoutMs: 30_000
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(9_999);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+
+    await expect(resultPromise).resolves.toEqual({
+      uid: 'UID_SCAN',
+      raw: {
+        code: 1000,
+        data: {
+          uid: 'UID_SCAN'
+        }
+      },
+      attempts: 2,
+      timedOut: false
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('解析应用扫码关注回调中的 UID', () => {

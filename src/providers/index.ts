@@ -22,12 +22,15 @@ export {
   createWxPusherQrCode,
   parseWxPusherCallback,
   queryWxPusherQrCodeUid,
+  waitForWxPusherQrCodeUid,
   WxPusherProvider,
   wxPusherProviderFactory
 } from './wxpusher';
 export type {
   CreateWxPusherQrCodeOptions,
   QueryWxPusherQrCodeUidOptions,
+  WaitForWxPusherQrCodeUidOptions,
+  WaitForWxPusherQrCodeUidResult,
   WxPusherCallbackEvent,
   WxPusherQrCodeResult,
   WxPusherQrCodeUidResult

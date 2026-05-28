@@ -90,6 +90,13 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    if (request.method === 'POST' && requestUrl.pathname === '/api/wxpusher/qrcode/wait') {
+      const payload = await readJsonBody(request);
+      const result = await waitForWxPusherQrCodeUid(payload);
+      sendJson(response, result);
+      return;
+    }
+
     if (request.method === 'POST' && requestUrl.pathname === '/api/wxpusher/callback') {
       const payload = await readJsonBody(request);
       const event = unicall.parseWxPusherCallback(payload);
@@ -290,6 +297,13 @@ async function createWxPusherQrCode(payload) {
 async function queryWxPusherQrCodeUid(payload) {
   return unicall.queryWxPusherQrCodeUid({
     code: readRequired(payload.code, 'wxpusher.qrCode.code')
+  });
+}
+
+async function waitForWxPusherQrCodeUid(payload) {
+  return unicall.waitForWxPusherQrCodeUid({
+    code: readRequired(payload.code, 'wxpusher.qrCode.code'),
+    timeoutMs: optionalNumber(payload.timeoutMs) ?? 120_000
   });
 }
 
@@ -1124,8 +1138,9 @@ function renderPage() {
       const localCallbackUrl = location.origin + '/api/wxpusher/callback';
       const code = wxpusherQrState.code || '';
       const image = qrCodeUrl ? '<img src="'+qrCodeUrl+'" alt="WxPusher 二维码">' : '<div class="qr-placeholder">填写二维码图片地址<br>或生成临时二维码</div>';
-      document.getElementById('wxpusherQrPanel').innerHTML = '<div class="qrbox">'+image+'<div><div class="hint">用于让用户扫码关注应用或主题。应用二维码扫码后，WxPusher 会把 UID 回调到后台；参数二维码也可以通过 code 查询 UID。</div><div class="actions"><button class="btn secondary" id="createWxPusherQr">生成临时二维码</button><button class="btn secondary" id="queryWxPusherUid">查询扫码 UID</button><button class="btn secondary" id="refreshWxPusherCallbacks">刷新回调</button></div><div class="hint">本地回调接收地址：'+localCallbackUrl+'</div>'+(configuredCallbackUrl ? '<div class="hint">当前配置回调地址：'+configuredCallbackUrl+'</div>' : '')+'<div class="hint">二维码 code：'+(code || '暂无')+'</div>'+(subscribeUrl ? '<div class="hint">订阅链接：<a href="'+subscribeUrl+'" target="_blank" rel="noreferrer">'+subscribeUrl+'</a></div>' : '')+'<div class="status" id="wxpusherQrStatus">等待操作...</div><div class="status" id="wxpusherCallbackStatus">等待回调...</div></div></div>';
+      document.getElementById('wxpusherQrPanel').innerHTML = '<div class="qrbox">'+image+'<div><div class="hint">用于让用户扫码关注应用或主题。没有公网回调服务时，先生成参数二维码，再让 SDK 按官方要求每 10 秒查询一次 code 对应的扫码 UID。</div><div class="actions"><button class="btn secondary" id="createWxPusherQr">生成临时二维码</button><button class="btn secondary" id="waitWxPusherUid">等待扫码 UID</button><button class="btn secondary" id="queryWxPusherUid">查询一次 UID</button><button class="btn secondary" id="refreshWxPusherCallbacks">刷新回调</button></div><div class="hint">本地回调接收地址：'+localCallbackUrl+'</div>'+(configuredCallbackUrl ? '<div class="hint">当前配置回调地址：'+configuredCallbackUrl+'</div>' : '')+'<div class="hint">二维码 code：'+(code || '暂无')+'</div>'+(subscribeUrl ? '<div class="hint">订阅链接：<a href="'+subscribeUrl+'" target="_blank" rel="noreferrer">'+subscribeUrl+'</a></div>' : '')+'<div class="status" id="wxpusherQrStatus">等待操作...</div><div class="status" id="wxpusherCallbackStatus">等待回调...</div></div></div>';
       document.getElementById('createWxPusherQr').onclick = createWxPusherQr;
+      document.getElementById('waitWxPusherUid').onclick = waitWxPusherUid;
       document.getElementById('queryWxPusherUid').onclick = queryWxPusherUid;
       document.getElementById('refreshWxPusherCallbacks').onclick = loadWxPusherCallbacks;
     }
@@ -1144,6 +1159,22 @@ function renderPage() {
         return;
       }
       document.getElementById('wxpusherQrStatus').textContent = JSON.stringify(body, null, 2);
+    }
+    async function waitWxPusherUid(){
+      if(!wxpusherQrState.code){
+        document.getElementById('wxpusherQrStatus').textContent = '请先生成临时二维码，再等待扫码 UID。';
+        return;
+      }
+      document.getElementById('wxpusherQrStatus').textContent = '等待扫码中...SDK 会按官方要求每 10 秒查询一次，最长等待 2 分钟。';
+      const res = await fetch('/api/wxpusher/qrcode/wait', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({code:wxpusherQrState.code, timeoutMs:120000})});
+      const body = await res.json();
+      if(body.uid){
+        const input = document.querySelector('[data-kind="value"][data-field="uids"]');
+        if(input) input.value = body.uid;
+      }
+      document.getElementById('wxpusherQrStatus').textContent = body.timedOut && !body.uid
+        ? '等待超时，暂未查询到 UID。请确认已经扫码关注，或稍后点击“查询一次 UID”。\\n' + JSON.stringify(body, null, 2)
+        : JSON.stringify(body, null, 2);
     }
     async function queryWxPusherUid(){
       if(!wxpusherQrState.code){
