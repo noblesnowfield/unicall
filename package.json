@@ -1,6 +1,6 @@
 {
   "name": "@noblesnowfield/unicall",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "URL-driven notification runtime for Node.js and browser integrations.",
   "type": "module",
   "author": "beichen2023",
