@@ -50,6 +50,41 @@ describe('PushplusProvider', () => {
     );
   });
 
+  it('按 Pushplus 发送接口映射 HTML 消息', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ code: 200, msg: '请求成功' }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json'
+        }
+      })
+    );
+    const registry = new ProviderRegistry([pushplusProviderFactory]);
+    const runtime = new NotificationRuntime({ registry }).add(
+      'pushplus://TOKEN_ABC?template=html'
+    );
+
+    const [result] = await runtime.send({
+      title: 'HTML 测试',
+      html: '<h1>Unicall</h1><p>HTML 内容</p>'
+    });
+
+    expect(result?.success).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://www.pushplus.plus/send',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          token: 'TOKEN_ABC',
+          title: 'HTML 测试',
+          content: '<h1>Unicall</h1><p>HTML 内容</p>',
+          template: 'html'
+        })
+      })
+    );
+  });
+
   it('把业务失败响应转换为结构化错误', async () => {
     vi.stubGlobal('fetch', fetchMock);
     fetchMock.mockResolvedValue(

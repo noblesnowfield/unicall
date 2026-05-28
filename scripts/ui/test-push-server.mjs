@@ -584,7 +584,11 @@ function getTemplateValues(config, channel, profileName) {
     return {};
   }
 
-  if (channel === 'email' && selected.templateOptions && typeof selected.templateOptions === 'object') {
+  if (
+    (channel === 'email' || channel === 'pushplus' || channel === 'wxpusher') &&
+    selected.templateOptions &&
+    typeof selected.templateOptions === 'object'
+  ) {
     return {
       ...selected,
       ...selected.templateOptions
@@ -819,7 +823,10 @@ function renderPage() {
       emailText: ['messageType','title','text'],
       emailGameNotification: ['messageType','template','nickname','appName','eventName','eventTitle','eventDescription','screenshotMode','screenshotUrl','screenshotBase64','actionUrl','actionText'],
       emailRawHtml: ['messageType','template','title','html'],
-      pushplus: ['title','text'],
+      pushplusText: ['messageType','title','text'],
+      pushplusMarkdown: ['messageType','title','markdown'],
+      pushplusGameNotification: ['messageType','template','nickname','appName','eventName','eventTitle','eventDescription','screenshotUrl','actionUrl','actionText'],
+      pushplusRawHtml: ['messageType','template','title','html'],
       miaotixing: ['title','text'],
       wxpusherGameNotification: ['template','nickname','appName','eventName','eventTitle','eventDescription','screenshotUrl','actionUrl','actionText'],
       wxpusherRawHtml: ['template','title','html'],
@@ -882,6 +889,7 @@ function renderPage() {
     }
     function renderConfigHint(field){
       const hints = {
+        template: active === 'pushplus' ? 'Pushplus 内容模板，可填 markdown/html/txt；发送 HTML 消息时建议设为 html。' : '',
         appQrCodeUrl: '选填：应用二维码图片地址；用户扫码关注应用后，WxPusher 会向后台回调 UID。',
         qrCodeUrl: '选填：已有应用二维码或主题二维码图片地址，填写后这里直接展示。',
         subscribeUrl: '选填：已有应用或主题订阅链接。',
@@ -894,7 +902,7 @@ function renderPage() {
     function getTemplateDefaults(channel, profile){
       const templates = config.templates?.[channel] || {};
       const selected = templates[profile] || templates.default || templates.demo || {};
-      if((channel === 'email' || channel === 'wxpusher') && selected.templateOptions){
+      if((channel === 'email' || channel === 'pushplus' || channel === 'wxpusher') && selected.templateOptions){
         return {...selected, ...selected.templateOptions};
       }
       return selected;
@@ -909,6 +917,12 @@ function renderPage() {
     function getMessageKey(templateValues){
       if(active === 'wxpusher'){
         return templateValues?.template === 'gameNotification' ? 'wxpusherGameNotification' : 'wxpusherRawHtml';
+      }
+      if(active === 'pushplus'){
+        if(templateValues?.messageType === 'html') {
+          return templateValues?.template === 'gameNotification' ? 'pushplusGameNotification' : 'pushplusRawHtml';
+        }
+        return templateValues?.messageType === 'markdown' || templateValues?.markdown ? 'pushplusMarkdown' : 'pushplusText';
       }
       if(active === 'webhook'){
         if(templateValues?.messageType !== 'html') return 'webhookText';
@@ -926,11 +940,13 @@ function renderPage() {
         screenshotUrl:'https://avatars.githubusercontent.com/u/6154722?s=48&v=4', screenshotBase64:'', actionUrl:'https://example.com/game/events', actionText:'进入控制台分析异常',
         title:'Unicall 测试推送', text:'测试推送', html:'<h1>Unicall 测试推送</h1><p>这是一条测试消息。</p>'
       };
+      defaults.markdown = '## Unicall\\n\\n这是一条 Markdown 测试消息。';
       const value = templateValues?.[field] || defaults[field] || '';
       if(field === 'messageType'){
         const textLabel = active === 'email' ? '文本邮件' : '文本消息';
         const htmlLabel = active === 'email' ? 'HTML 邮件' : 'HTML 消息';
-        return '<div class="field"><label>messageType</label><select data-kind="message" data-field="messageType" data-rerender-message="true"><option value="text" '+(value==='text'?'selected':'')+'>'+textLabel+'</option><option value="html" '+(value!=='text'?'selected':'')+'>'+htmlLabel+'</option></select><span class="hint">选择正文类型；文本只发送 title/text，HTML 可继续选择模板。</span></div>';
+        const markdownOption = active === 'pushplus' ? '<option value="markdown" '+(value==='markdown'?'selected':'')+'>Markdown 消息</option>' : '';
+        return '<div class="field"><label>messageType</label><select data-kind="message" data-field="messageType" data-rerender-message="true"><option value="text" '+(value==='text'?'selected':'')+'>'+textLabel+'</option>'+markdownOption+'<option value="html" '+(value==='html'?'selected':'')+'>'+htmlLabel+'</option></select><span class="hint">选择正文类型；Pushplus 发送 HTML 时，渠道 template 建议设为 html。</span></div>';
       }
       if(field === 'template'){
         const options = Object.entries(emailHtmlTemplates).map(([key,label]) => '<option value="'+key+'" '+(key===value?'selected':'')+'>'+label+'</option>').join('');
@@ -939,7 +955,7 @@ function renderPage() {
       if(field === 'screenshotBase64'){
         return '<div class="field full"><label>'+field+'</label><textarea data-kind="message" data-field="'+field+'" placeholder="选填：粘贴图片 base64，优先级高于本地 demo 图">'+value+'</textarea>'+renderMessageHint(field)+'</div>';
       }
-      if(field === 'eventDescription' || field === 'html'){
+      if(field === 'eventDescription' || field === 'html' || field === 'markdown'){
         return '<div class="field full"><label>'+field+'</label><textarea data-kind="message" data-field="'+field+'">'+value+'</textarea>'+renderMessageHint(field)+'</div>';
       }
       if(field === 'screenshotMode'){
@@ -949,7 +965,7 @@ function renderPage() {
     }
     function renderMessageHint(field){
       const hints = {
-        actionUrl: '选填：填写后邮件模板显示按钮，留空则不显示按钮。',
+        actionUrl: '选填：填写后模板显示按钮，留空则不显示按钮。',
         screenshotUrl: '选填：screenshotMode 选择远程图片 URL 时使用。',
         screenshotBase64: '选填：填写后使用 base64 内联图片；留空则使用远程 URL 或本地 demo.png。',
         eventDescription: '模板内容：事件描述或提示内容。',

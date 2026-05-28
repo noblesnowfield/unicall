@@ -143,9 +143,28 @@ export default {
       }
     },
     pushplus: {
+      default: {
+        messageType: 'markdown',
+        title: process.env.UNICALL_PUSHPLUS_DEFAULT_TITLE || 'Unicall Pushplus Markdown 测试',
+        markdown: textFromEnv(
+          process.env.UNICALL_PUSHPLUS_DEFAULT_MARKDOWN,
+          '## Unicall\n\n这是一条 Markdown 测试消息。'
+        )
+      },
+      ops: {
+        messageType: 'html',
+        template: 'rawHtml',
+        title: process.env.UNICALL_PUSHPLUS_OPS_TITLE || 'Unicall Pushplus HTML 测试',
+        html: textFromEnv(
+          process.env.UNICALL_PUSHPLUS_OPS_HTML,
+          '<h1>Unicall Pushplus</h1><p>这是一条 HTML 测试消息。</p>'
+        )
+      },
       demo: {
-        title: 'Unicall Pushplus 测试',
-        markdown: '## Unicall\n\n这是一条 Markdown 测试消息。'
+        messageType: 'html',
+        template: 'rawHtml',
+        title: 'Unicall Pushplus HTML 测试',
+        html: '<h1>Unicall Pushplus</h1><p>这是一条 HTML 测试消息。</p>'
       }
     },
     miaotixing: {
@@ -209,4 +228,12 @@ function optionalBoolean(value) {
   }
 
   return value === 'true' || value === '1';
+}
+
+function textFromEnv(value, fallback) {
+  if (!value) {
+    return fallback;
+  }
+
+  return value.replaceAll('\\n', '\n');
 }
