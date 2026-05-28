@@ -594,31 +594,91 @@ function sanitizeConfig(config) {
 }
 
 function getTemplateValues(config, channel, profileName) {
-  const channelTemplates = config.templates?.[channel];
-
-  if (!channelTemplates || typeof channelTemplates !== 'object') {
-    return {};
-  }
-
+  const channelTemplates = readTemplateGroup(config.templates?.[channel]);
   const selected =
     channelTemplates[profileName] ?? channelTemplates.default ?? channelTemplates.demo;
+  const common = getCommonTemplateValues(config.templates?.common, selected, channel);
+  const merged = mergeTemplateValues(common, selected);
 
-  if (!selected || typeof selected !== 'object') {
-    return {};
+  return flattenTemplateValues(merged);
+}
+
+function readTemplateGroup(value) {
+  return value && typeof value === 'object' ? value : {};
+}
+
+function getCommonTemplateValues(commonTemplates, selected, channel) {
+  const templates = readTemplateGroup(commonTemplates);
+  const key = getCommonTemplateKey(selected, channel);
+  const template = key ? templates[key] : undefined;
+
+  return template && typeof template === 'object' ? template : {};
+}
+
+function getCommonTemplateKey(selected, channel) {
+  if (selected && typeof selected === 'object') {
+    if (selected.messageType === 'text' || selected.text) {
+      return 'text';
+    }
+
+    if (selected.template === 'gameNotification') {
+      return 'gameNotification';
+    }
+
+    if (selected.messageType === 'html' || selected.html) {
+      return 'html';
+    }
   }
 
+  if (channel === 'miaotixing') {
+    return 'text';
+  }
+
+  if (channel === 'email' || channel === 'wxpusher' || channel === 'webhook') {
+    return 'gameNotification';
+  }
+
+  if (channel === 'pushplus') {
+    return 'html';
+  }
+
+  return undefined;
+}
+
+function mergeTemplateValues(base, override) {
+  const left = base && typeof base === 'object' ? base : {};
+  const right = override && typeof override === 'object' ? override : {};
+  const output = {
+    ...left,
+    ...right
+  };
+
   if (
-    (channel === 'email' || channel === 'pushplus' || channel === 'wxpusher') &&
-    selected.templateOptions &&
-    typeof selected.templateOptions === 'object'
+    (left.templateOptions && typeof left.templateOptions === 'object') ||
+    (right.templateOptions && typeof right.templateOptions === 'object')
   ) {
-    return {
-      ...selected,
-      ...selected.templateOptions
+    output.templateOptions = {
+      ...(left.templateOptions && typeof left.templateOptions === 'object' ? left.templateOptions : {}),
+      ...(right.templateOptions && typeof right.templateOptions === 'object' ? right.templateOptions : {})
     };
   }
 
-  return selected;
+  return output;
+}
+
+function flattenTemplateValues(values) {
+  if (!values || typeof values !== 'object') {
+    return {};
+  }
+
+  if (values.templateOptions && typeof values.templateOptions === 'object') {
+    return {
+      ...values,
+      ...values.templateOptions
+    };
+  }
+
+  return values;
 }
 
 function normalizeSendResult(result) {
@@ -923,12 +983,49 @@ function renderPage() {
       return hints[field] ? '<span class="hint">'+hints[field]+'</span>' : '';
     }
     function getTemplateDefaults(channel, profile){
-      const templates = config.templates?.[channel] || {};
+      const templates = readTemplateGroup(config.templates?.[channel]);
       const selected = templates[profile] || templates.default || templates.demo || {};
-      if((channel === 'email' || channel === 'pushplus' || channel === 'wxpusher') && selected.templateOptions){
-        return {...selected, ...selected.templateOptions};
+      const common = getCommonTemplateValues(config.templates?.common, selected, channel);
+      return flattenTemplateValues(mergeTemplateValues(common, selected));
+    }
+    function readTemplateGroup(value){
+      return value && typeof value === 'object' ? value : {};
+    }
+    function getCommonTemplateValues(commonTemplates, selected, channel){
+      const templates = readTemplateGroup(commonTemplates);
+      const key = getCommonTemplateKey(selected, channel);
+      const template = key ? templates[key] : undefined;
+      return template && typeof template === 'object' ? template : {};
+    }
+    function getCommonTemplateKey(selected, channel){
+      if(selected && typeof selected === 'object'){
+        if(selected.messageType === 'text' || selected.text) return 'text';
+        if(selected.template === 'gameNotification') return 'gameNotification';
+        if(selected.messageType === 'html' || selected.html) return 'html';
       }
-      return selected;
+      if(channel === 'miaotixing') return 'text';
+      if(channel === 'email' || channel === 'wxpusher' || channel === 'webhook') return 'gameNotification';
+      if(channel === 'pushplus') return 'html';
+      return undefined;
+    }
+    function mergeTemplateValues(base, override){
+      const left = base && typeof base === 'object' ? base : {};
+      const right = override && typeof override === 'object' ? override : {};
+      const output = {...left, ...right};
+      if((left.templateOptions && typeof left.templateOptions === 'object') || (right.templateOptions && typeof right.templateOptions === 'object')){
+        output.templateOptions = {
+          ...(left.templateOptions && typeof left.templateOptions === 'object' ? left.templateOptions : {}),
+          ...(right.templateOptions && typeof right.templateOptions === 'object' ? right.templateOptions : {})
+        };
+      }
+      return output;
+    }
+    function flattenTemplateValues(values){
+      if(!values || typeof values !== 'object') return {};
+      if(values.templateOptions && typeof values.templateOptions === 'object'){
+        return {...values, ...values.templateOptions};
+      }
+      return values;
     }
     function renderMessageForm(templateValues){
       const messageKey = getMessageKey(templateValues);

@@ -6,6 +6,49 @@
  * 2. 在部署平台或本地 .env.local 中提供真实环境变量。
  * 3. 不要把真实 token、password、secret 硬编码进可提交文件。
  */
+const commonRawHtmlTemplate = {
+  messageType: 'html',
+  template: 'rawHtml',
+  title: process.env.UNICALL_TEMPLATE_HTML_TITLE || 'Unicall HTML 测试',
+  html: textFromEnv(
+    process.env.UNICALL_TEMPLATE_HTML_CONTENT,
+    '<h1>Unicall</h1><p>这是一条 HTML 测试消息。</p>'
+  )
+};
+
+const commonGameNotificationTemplate = {
+  messageType: 'html',
+  template: 'gameNotification',
+  templateOptions: {
+    appName: process.env.UNICALL_TEMPLATE_APP_NAME || '通知应用',
+    nickname: process.env.UNICALL_TEMPLATE_NICKNAME || 'mzh',
+    eventName: process.env.UNICALL_TEMPLATE_EVENT_NAME || '游戏服务状态通知',
+    eventTitle: process.env.UNICALL_TEMPLATE_EVENT_TITLE || '副本匹配队列恢复正常',
+    eventDescription:
+      process.env.UNICALL_TEMPLATE_EVENT_DESCRIPTION || '匹配服务短暂抖动后已自动恢复。',
+    screenshotUrl:
+      process.env.UNICALL_TEMPLATE_SCREENSHOT_URL ||
+      'https://avatars.githubusercontent.com/u/6154722?s=48&v=4',
+    actionUrl: process.env.UNICALL_TEMPLATE_ACTION_URL || 'https://example.com/game/events',
+    actionText: process.env.UNICALL_TEMPLATE_ACTION_TEXT || '查看运行详情'
+  }
+};
+
+const commonTextTemplate = {
+  messageType: 'text',
+  title: 'Unicall 文本测试',
+  text: '这是一条文本测试消息。'
+};
+
+const pushplusMarkdownTemplate = {
+  messageType: 'markdown',
+  title: 'Unicall Pushplus Markdown 测试',
+  markdown: textFromEnv(
+    process.env.UNICALL_PUSHPLUS_DEFAULT_MARKDOWN,
+    '## Unicall\n\n这是一条 Markdown 测试消息。'
+  )
+};
+
 export default {
   defaultProfile: process.env.UNICALL_PROFILE ?? 'default',
 
@@ -76,48 +119,36 @@ export default {
   },
 
   templates: {
+    common: {
+      html: commonRawHtmlTemplate,
+      gameNotification: commonGameNotificationTemplate,
+      text: commonTextTemplate
+    },
     webhook: {
       demo: {
-        messageType: 'html',
-        template: 'gameNotification',
+        ...commonGameNotificationTemplate,
         templateOptions: {
-          appName: '通知应用',
-          nickname: 'mzh',
+          ...commonGameNotificationTemplate.templateOptions,
           eventName: 'Webhook HTML 测试',
           eventTitle: '本地模拟接收服务已收到通知',
           eventDescription: 'Webhook Provider 会把 HTML 内容作为 JSON 字段发送给接收端，接收端决定如何展示或转发。',
-          screenshotUrl: 'https://avatars.githubusercontent.com/u/6154722?s=48&v=4',
           actionUrl: 'http://127.0.0.1:4317/mock/webhook/requests',
           actionText: '查看最近请求'
         }
       },
       text: {
-        messageType: 'text',
+        ...commonTextTemplate,
         title: 'Unicall Webhook 测试',
         text: '这是一条 Webhook JSON 测试消息。'
       }
     },
     email: {
       default: {
-        // 邮件内容配置：文本/HTML、模板名称和模板可选字段都放这里。
-        messageType: 'html',
-        template: 'gameNotification',
-        templateOptions: {
-          appName: '通知应用',
-          nickname: 'mzh',
-          eventName: '游戏服务状态通知',
-          eventTitle: '副本匹配队列恢复正常',
-          eventDescription: '匹配服务短暂抖动后已自动恢复。',
-          // 事件截图二选一：
-          // screenshotUrl 用远程图片地址；screenshotBase64 用本地或上游传入的 base64 图片内容。
-          screenshotUrl: 'https://avatars.githubusercontent.com/u/6154722?s=48&v=4',
-          // screenshotBase64: process.env.UNICALL_EMAIL_DEFAULT_SCREENSHOT_BASE64,
-          actionUrl: 'https://example.com/game/events',
-          actionText: '查看运行详情'
-        }
+        // 邮件内容配置：默认复用通用游戏通知模板。
+        ...commonGameNotificationTemplate
       },
       text: {
-        messageType: 'text',
+        ...commonTextTemplate,
         title: 'Unicall 邮件测试',
         text: '这是一封文本测试邮件。'
       },
@@ -132,71 +163,29 @@ export default {
         ]
       },
       gameNotification: {
-        messageType: 'html',
-        template: 'gameNotification',
-        appName: '通知应用',
-        nickname: 'mzh',
-        eventName: '游戏服务状态通知',
-        eventTitle: '副本匹配队列恢复正常',
-        eventDescription: '匹配服务短暂抖动后已自动恢复。',
-        screenshotUrl: 'https://avatars.githubusercontent.com/u/6154722?s=48&v=4'
-      }
+        ...commonGameNotificationTemplate
+      },
+      html: commonRawHtmlTemplate
     },
     pushplus: {
-      default: {
-        messageType: 'html',
-        template: 'rawHtml',
-        title: process.env.UNICALL_PUSHPLUS_DEFAULT_TITLE || 'Unicall Pushplus HTML 测试',
-        html: textFromEnv(
-          process.env.UNICALL_PUSHPLUS_DEFAULT_HTML,
-          '<h1>Unicall Pushplus</h1><p>这是一条 HTML 测试消息。</p>'
-        ),
-        markdown: textFromEnv(
-          process.env.UNICALL_PUSHPLUS_DEFAULT_MARKDOWN,
-          '## Unicall\n\n这是一条 Markdown 测试消息。'
-        )
-      },
-      ops: {
-        messageType: 'html',
-        template: 'rawHtml',
-        title: process.env.UNICALL_PUSHPLUS_OPS_TITLE || 'Unicall Pushplus HTML 测试',
-        html: textFromEnv(
-          process.env.UNICALL_PUSHPLUS_OPS_HTML,
-          '<h1>Unicall Pushplus</h1><p>这是一条 HTML 测试消息。</p>'
-        )
-      },
-      demo: {
-        messageType: 'html',
-        template: 'rawHtml',
-        title: 'Unicall Pushplus HTML 测试',
-        html: '<h1>Unicall Pushplus</h1><p>这是一条 HTML 测试消息。</p>'
-      }
+      default: commonRawHtmlTemplate,
+      ops: commonRawHtmlTemplate,
+      markdown: pushplusMarkdownTemplate,
+      demo: commonRawHtmlTemplate
     },
     miaotixing: {
       demo: {
+        ...commonTextTemplate,
+        title: 'Unicall 喵提醒测试',
         text: 'Unicall 喵提醒测试'
       }
     },
     wxpusher: {
       default: {
-        // WxPusher 支持 HTML，可复用通用 HTML 模板。
-        template: 'gameNotification',
-        templateOptions: {
-          appName: '通知应用',
-          nickname: 'mzh',
-          eventName: '游戏服务状态通知',
-          eventTitle: '副本匹配队列恢复正常',
-          eventDescription: '匹配服务短暂抖动后已自动恢复。',
-          screenshotUrl: 'https://avatars.githubusercontent.com/u/6154722?s=48&v=4',
-          actionUrl: 'https://example.com/game/events',
-          actionText: '查看运行详情'
-        }
+        // WxPusher 支持 HTML，可复用通用游戏通知模板。
+        ...commonGameNotificationTemplate
       },
-      demo: {
-        template: 'rawHtml',
-        title: 'Unicall WxPusher 测试',
-        html: '<h1>Unicall</h1><p>这是一条 HTML 测试消息。</p>'
-      }
+      demo: commonRawHtmlTemplate
     }
   }
 };
