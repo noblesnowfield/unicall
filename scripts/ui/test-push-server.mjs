@@ -150,7 +150,7 @@ async function sendNotification(payload) {
   }
 
   if (channel === 'pushplus') {
-    const [result] = await unicall.notify(createPushplusUrl(values), createPushplusMessage(messageValues), {
+    const [result] = await unicall.notify(createPushplusUrl(values, messageValues), createPushplusMessage(messageValues), {
       registry
     });
 
@@ -250,7 +250,7 @@ async function sendChannel(channel, profileName, values, messageValues) {
   }
 
   if (channel === 'pushplus') {
-    const [result] = await unicall.notify(createPushplusUrl(values), createPushplusMessage(messageValues), {
+    const [result] = await unicall.notify(createPushplusUrl(values, messageValues), createPushplusMessage(messageValues), {
       registry
     });
 
@@ -450,20 +450,43 @@ function createEmailUrl(values) {
   return `smtp://${authority}?${params}`;
 }
 
-function createPushplusUrl(values) {
+function createPushplusUrl(values, messageValues = {}) {
   const params = new URLSearchParams();
 
   if (values.topic) {
     params.set('topic', values.topic);
   }
 
-  if (values.template) {
-    params.set('template', values.template);
+  const template = resolvePushplusSendTemplate(values, messageValues);
+
+  if (template) {
+    params.set('template', template);
   }
 
   return `pushplus://${encodeURIComponent(readRequired(values.token, 'pushplus.token'))}${
     params.size > 0 ? `?${params}` : ''
   }`;
+}
+
+function resolvePushplusSendTemplate(values, messageValues) {
+  if (
+    messageValues.messageType === 'html' ||
+    messageValues.template === 'gameNotification' ||
+    messageValues.template === 'rawHtml' ||
+    messageValues.html
+  ) {
+    return 'html';
+  }
+
+  if (messageValues.messageType === 'markdown' || messageValues.markdown) {
+    return 'markdown';
+  }
+
+  if (messageValues.messageType === 'text' || messageValues.text) {
+    return 'txt';
+  }
+
+  return values.template;
 }
 
 function createMiaotixingUrl(values) {

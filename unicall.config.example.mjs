@@ -14,7 +14,7 @@ export default {
       default: {
         token: process.env.UNICALL_PUSHPLUS_DEFAULT_TOKEN,
         topic: process.env.UNICALL_PUSHPLUS_DEFAULT_TOPIC,
-        template: process.env.UNICALL_PUSHPLUS_DEFAULT_TEMPLATE ?? 'markdown'
+        template: process.env.UNICALL_PUSHPLUS_DEFAULT_TEMPLATE ?? 'html'
       },
       ops: {
         token: process.env.UNICALL_PUSHPLUS_OPS_TOKEN,
@@ -144,8 +144,13 @@ export default {
     },
     pushplus: {
       default: {
-        messageType: 'markdown',
-        title: process.env.UNICALL_PUSHPLUS_DEFAULT_TITLE || 'Unicall Pushplus Markdown 测试',
+        messageType: 'html',
+        template: 'rawHtml',
+        title: process.env.UNICALL_PUSHPLUS_DEFAULT_TITLE || 'Unicall Pushplus HTML 测试',
+        html: textFromEnv(
+          process.env.UNICALL_PUSHPLUS_DEFAULT_HTML,
+          '<h1>Unicall Pushplus</h1><p>这是一条 HTML 测试消息。</p>'
+        ),
         markdown: textFromEnv(
           process.env.UNICALL_PUSHPLUS_DEFAULT_MARKDOWN,
           '## Unicall\n\n这是一条 Markdown 测试消息。'
